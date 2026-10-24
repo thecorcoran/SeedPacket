@@ -7,19 +7,20 @@
 
   // Application State
   const state = {
-    seedName: "Tomato",
-    latinName: "Solanum lycopersicum",
-    variety: "Brandywine Heirloom",
+    seedName: "Sunflower",
+    latinName: "Helianthus annuus",
+    variety: "Mammoth Russian",
     dateHarvested: "",
     timeHarvested: "",
-    notes: "Indeterminate heirloom vine. Fermented 3 days, viability tested.",
-    clipArtId: "tomato",
-    fontFamily: "'Rye', serif",
+    notes: "Giant golden heads up to 14 inches across. Birds and pollinators adore.",
+    clipArtId: "sunflower",
+    fontFamily: "'Abril Fatface', serif",
+    templateStyle: "fullsheet", // 'fullsheet' (No-Cut, 100% paper utilized) or 'cutout'
     paperSize: "letter",
     envelopeSize: "medium",
     printMode: "onesided",
     showFoldLines: true,
-    activeDuplexPage: 1, // 1 or 2 (used only when printMode === 'duplex')
+    activeDuplexPage: 1, // 1 or 2
     zoom: 'fit'
   };
 
@@ -33,6 +34,9 @@
     inputNotes: document.getElementById('input-notes'),
     clipArtGrid: document.getElementById('clip-art-grid'),
     selectFont: document.getElementById('select-font'),
+    selectTemplateStyle: document.getElementById('select-template-style'),
+    templateStyleHint: document.getElementById('template-style-hint'),
+    groupFinishedSize: document.getElementById('group-finished-size'),
     selectPaperSize: document.getElementById('select-paper-size'),
     selectEnvelopeSize: document.getElementById('select-envelope-size'),
     selectPrintMode: document.getElementById('select-print-mode'),
@@ -107,7 +111,6 @@
     const formatted = tokens.map((tok, idx) => {
       const lower = tok.toLowerCase();
       if (idx === 0) {
-        // Genus: Capitalize initial letter, lowercase remainder
         return lower.charAt(0).toUpperCase() + lower.slice(1);
       }
       if (rankKeywords.has(lower)) {
@@ -115,10 +118,8 @@
         return lower;
       }
       if (inCultivar || tok.startsWith("'") || tok.startsWith('"')) {
-        // Cultivar epithet: keep capitalized
         return tok.charAt(0).toUpperCase() + tok.slice(1);
       }
-      // Specific or infraspecific epithet: lowercase
       return lower;
     });
 
@@ -253,6 +254,20 @@
       renderPreview();
     });
 
+    // Template Style (Full Sheet No-Cut vs Cutout Net)
+    elements.selectTemplateStyle.addEventListener('change', (e) => {
+      state.templateStyle = e.target.value;
+      const isFullSheet = state.templateStyle === 'fullsheet';
+      elements.groupFinishedSize.style.display = isFullSheet ? 'none' : 'block';
+      elements.templateStyleHint.textContent = isFullSheet
+        ? '✓ Uses the entire 8.5×11 sheet. Zero cutting required—just fold along dashed lines!'
+        : '✂ Cut around solid perimeter with scissors, then fold along dashed lines.';
+      elements.templateStyleHint.style.color = isFullSheet ? '#2e5339' : '#8b3a2b';
+
+      updatePreviewModeTag();
+      renderPreview();
+    });
+
     // Paper & Envelope Sizes
     elements.selectPaperSize.addEventListener('change', (e) => {
       state.paperSize = e.target.value;
@@ -272,10 +287,7 @@
       const isDuplex = state.printMode === 'duplex';
       elements.duplexNote.style.display = isDuplex ? 'block' : 'none';
       elements.duplexTabs.style.display = isDuplex ? 'flex' : 'none';
-      elements.previewModeTag.textContent = isDuplex
-        ? `(Duplex - Page ${state.activeDuplexPage})`
-        : `(One-Sided Net)`;
-
+      updatePreviewModeTag();
       renderPreview();
     });
 
@@ -284,7 +296,7 @@
       state.activeDuplexPage = 1;
       elements.tabPage1.classList.add('active');
       elements.tabPage2.classList.remove('active');
-      elements.previewModeTag.textContent = `(Duplex - Page 1 Outside)`;
+      updatePreviewModeTag();
       renderPreview();
     });
 
@@ -292,7 +304,7 @@
       state.activeDuplexPage = 2;
       elements.tabPage2.classList.add('active');
       elements.tabPage1.classList.remove('active');
-      elements.previewModeTag.textContent = `(Duplex - Page 2 Inside Net)`;
+      updatePreviewModeTag();
       renderPreview();
     });
 
@@ -344,77 +356,69 @@
     });
   }
 
+  function updatePreviewModeTag() {
+    const isDuplex = state.printMode === 'duplex';
+    const isFullSheet = state.templateStyle === 'fullsheet';
+    const styleName = isFullSheet ? 'Full 8.5×11 Sheet • No-Cut' : 'Cutout Net';
+
+    if (isDuplex) {
+      elements.previewModeTag.textContent = `(${styleName} • Duplex Page ${state.activeDuplexPage})`;
+    } else {
+      elements.previewModeTag.textContent = `(${styleName} • Single Sheet)`;
+    }
+  }
+
   /**
    * Generates the SVG string for a given sheet page.
    * pageType: 'onesided' | 'duplex-1' | 'duplex-2'
    */
   function generateSheetSVG(pageType) {
-    const metrics = calculateEnvelopeMetrics(state.envelopeSize, state.paperSize);
-    const { paper } = metrics;
-    const cutPath = generateCutOutlinePath(metrics);
+    const metrics = calculateEnvelopeMetrics(state.templateStyle, state.envelopeSize, state.paperSize);
+    const { paper, isFullSheet } = metrics;
     const foldLines = generateFoldLines(metrics);
 
     let contentSvg = '';
 
-    if (pageType === 'onesided') {
-      // ONE-SIDED PRINTING:
-      // Front artwork + cut outline + dashed fold lines in subtle gray
-      contentSvg += renderFrontPanelArtwork(state, metrics);
+    if (isFullSheet) {
+      // =========================================================================
+      // FULL SHEET NO-CUT TEMPLATE (100% of 8.5x11 page utilized, zero cutting)
+      // =========================================================================
 
-      // Solid Cut Outline
+      // Background paper frame
       contentSvg += `
-        <path d="${cutPath}" fill="none" stroke="#222222" stroke-width="0.32" stroke-linejoin="round" stroke-linecap="round" />
+        <rect x="0" y="0" width="${paper.width}" height="${paper.height}" fill="#ffffff" stroke="none" />
       `;
 
-      // Dashed Fold Lines
-      if (state.showFoldLines) {
-        foldLines.forEach(line => {
-          contentSvg += `
-            <line x1="${line.x1.toFixed(2)}" y1="${line.y1.toFixed(2)}" x2="${line.x2.toFixed(2)}" y2="${line.y2.toFixed(2)}"
-                  stroke="#9c9084" stroke-width="0.28" stroke-dasharray="3 2" />
-          `;
-        });
-      }
+      if (pageType === 'onesided' || pageType === 'duplex-1') {
+        // Front Artwork centered in its panel
+        contentSvg += renderFrontPanelArtwork(state, metrics);
 
-      // Small Margin instructions
-      contentSvg += `
-        <text x="${(paper.width / 2).toFixed(2)}" y="${(paper.height - 8).toFixed(2)}"
-              text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.7" fill="#756254">
-          ✂ Cut along solid outline • - - - Fold along dashed lines • Fold with printed artwork facing outside
-        </text>
-      `;
+        // Outside decorations on flaps (Garden notes on back flap, seal on top flap)
+        contentSvg += renderFullSheetOutsideDecorations(state, metrics);
 
-    } else if (pageType === 'duplex-1') {
-      // TWO-SIDED PAGE 1: OUTSIDE ARTWORK
-      contentSvg += renderFrontPanelArtwork(state, metrics);
-      contentSvg += renderDuplexPage1Decorations(state, metrics);
+        // Dashed Fold Lines
+        if (state.showFoldLines) {
+          foldLines.forEach(line => {
+            contentSvg += `
+              <line x1="${line.x1.toFixed(2)}" y1="${line.y1.toFixed(2)}" x2="${line.x2.toFixed(2)}" y2="${line.y2.toFixed(2)}"
+                    stroke="#a6998d" stroke-width="0.30" stroke-dasharray="3 2" />
+            `;
+          });
+        }
 
-      // Faint alignment crop marks at envelope corners
-      const { frontX: fx, frontY: fy, geom } = metrics;
-      contentSvg += `
-        <g stroke="#d5ccbe" stroke-width="0.2" fill="none">
-          <path d="M ${(fx - 4).toFixed(2)} ${fy.toFixed(2)} L ${(fx + 4).toFixed(2)} ${fy.toFixed(2)} M ${fx.toFixed(2)} ${(fy - 4).toFixed(2)} L ${fx.toFixed(2)} ${(fy + 4).toFixed(2)}" />
-          <path d="M ${(fx + geom.W - 4).toFixed(2)} ${fy.toFixed(2)} L ${(fx + geom.W + 4).toFixed(2)} ${fy.toFixed(2)} M ${(fx + geom.W).toFixed(2)} ${(fy - 4).toFixed(2)} L ${(fx + geom.W).toFixed(2)} ${(fy + 4).toFixed(2)}" />
-          <path d="M ${(fx - 4).toFixed(2)} ${(fy + geom.H).toFixed(2)} L ${(fx + 4).toFixed(2)} ${(fy + geom.H).toFixed(2)} M ${fx.toFixed(2)} ${(fy + geom.H - 4).toFixed(2)} L ${fx.toFixed(2)} ${(fy + geom.H + 4).toFixed(2)}" />
-          <path d="M ${(fx + geom.W - 4).toFixed(2)} ${(fy + geom.H).toFixed(2)} L ${(fx + geom.W + 4).toFixed(2)} ${(fy + geom.H).toFixed(2)} M ${(fx + geom.W).toFixed(2)} ${(fy + geom.H - 4).toFixed(2)} L ${(fx + geom.W).toFixed(2)} ${(fy + geom.H + 4).toFixed(2)}" />
-        </g>
-        <text x="${(paper.width / 2).toFixed(2)}" y="${(paper.height - 8).toFixed(2)}"
-              text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.7" fill="#756254">
-          PAGE 1 OF 2 (OUTSIDE ARTWORK) • Flip paper on LONG EDGE when printing two-sided
-        </text>
-      `;
-
-    } else if (pageType === 'duplex-2') {
-      // TWO-SIDED PAGE 2: INSIDE NET (Mirrored horizontally for back-to-back registration)
-      const mirroredCutPath = mirrorPathHorizontally(cutPath, paper.width);
-
-      // Solid Cut Outline
-      contentSvg += `
-        <path d="${mirroredCutPath}" fill="none" stroke="#222222" stroke-width="0.32" stroke-linejoin="round" stroke-linecap="round" />
-      `;
-
-      // Dashed Fold Lines (Mirrored X)
-      if (state.showFoldLines) {
+        // Margin Instructions
+        contentSvg += `
+          <text x="${(paper.width / 2).toFixed(2)}" y="${(paper.height - 4).toFixed(2)}"
+                text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.6" fill="#8c7866">
+            NO CUTTING REQUIRED • FOLD ENTIRE 8.5 × 11 SHEET ALONG DASHED LINES
+          </text>
+        `;
+      } else if (pageType === 'duplex-2') {
+        // Duplex Page 2 (Inside of sheet with folding creases & guidance)
+        contentSvg += `
+          <!-- Inside Folding Guidelines -->
+          <g class="inside-creases">
+        `;
         foldLines.forEach(line => {
           const mx1 = paper.width - line.x1;
           const mx2 = paper.width - line.x2;
@@ -423,18 +427,76 @@
                   stroke="#5a4635" stroke-width="0.32" stroke-dasharray="3 2" />
           `;
         });
+
+        // Inside center pocket prompt
+        contentSvg += `
+          <text x="${(paper.width / 2).toFixed(2)}" y="${(metrics.frontY + metrics.geom.H / 2).toFixed(2)}"
+                text-anchor="middle" font-family="'IM Fell English', serif" font-size="3.4" fill="#a6998d">
+            PLACE SEEDS HERE AFTER FOLDING SIDES &amp; BOTTOM
+          </text>
+          <text x="${(paper.width / 2).toFixed(2)}" y="${(paper.height - 4).toFixed(2)}"
+                text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.6" fill="#8c7866">
+            PAGE 2 OF 2 (INSIDE OF SHEET) • Mirrored for long-edge duplex printing
+          </text>
+          </g>
+        `;
       }
 
-      // Step-by-step folding guides inside flaps
-      contentSvg += renderInsideFoldingGuides(metrics, true);
+    } else {
+      // =========================================================================
+      // TRADITIONAL CUTOUT NET MODE
+      // =========================================================================
+      const cutPath = generateCutOutlinePath(metrics);
 
-      // Margin instructions
-      contentSvg += `
-        <text x="${(paper.width / 2).toFixed(2)}" y="${(paper.height - 8).toFixed(2)}"
-              text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.7" fill="#756254">
-          PAGE 2 OF 2 (INSIDE NET &amp; FOLDING CREASES) • Mirrored for long-edge duplex registration
-        </text>
-      `;
+      if (pageType === 'onesided') {
+        contentSvg += renderFrontPanelArtwork(state, metrics);
+        contentSvg += `<path d="${cutPath}" fill="none" stroke="#222222" stroke-width="0.32" stroke-linejoin="round" stroke-linecap="round" />`;
+
+        if (state.showFoldLines) {
+          foldLines.forEach(line => {
+            contentSvg += `
+              <line x1="${line.x1.toFixed(2)}" y1="${line.y1.toFixed(2)}" x2="${line.x2.toFixed(2)}" y2="${line.y2.toFixed(2)}"
+                    stroke="#a6998d" stroke-width="0.28" stroke-dasharray="3 2" />
+            `;
+          });
+        }
+
+        contentSvg += `
+          <text x="${(paper.width / 2).toFixed(2)}" y="${(paper.height - 8).toFixed(2)}"
+                text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.6" fill="#756254">
+            ✂ Cut along solid outline • - - - Fold along dashed lines
+          </text>
+        `;
+      } else if (pageType === 'duplex-1') {
+        contentSvg += renderFrontPanelArtwork(state, metrics);
+        contentSvg += `
+          <text x="${(paper.width / 2).toFixed(2)}" y="${(paper.height - 8).toFixed(2)}"
+                text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.6" fill="#756254">
+            PAGE 1 OF 2 (OUTSIDE ARTWORK) • Flip paper on LONG EDGE
+          </text>
+        `;
+      } else if (pageType === 'duplex-2') {
+        const mirroredCutPath = mirrorPathHorizontally(cutPath, paper.width);
+        contentSvg += `<path d="${mirroredCutPath}" fill="none" stroke="#222222" stroke-width="0.32" stroke-linejoin="round" stroke-linecap="round" />`;
+
+        if (state.showFoldLines) {
+          foldLines.forEach(line => {
+            const mx1 = paper.width - line.x1;
+            const mx2 = paper.width - line.x2;
+            contentSvg += `
+              <line x1="${mx1.toFixed(2)}" y1="${line.y1.toFixed(2)}" x2="${mx2.toFixed(2)}" y2="${line.y2.toFixed(2)}"
+                    stroke="#5a4635" stroke-width="0.32" stroke-dasharray="3 2" />
+            `;
+          });
+        }
+
+        contentSvg += `
+          <text x="${(paper.width / 2).toFixed(2)}" y="${(paper.height - 8).toFixed(2)}"
+                text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.6" fill="#756254">
+            PAGE 2 OF 2 (INSIDE NET &amp; CREASES) • Mirrored for duplex printing
+          </text>
+        `;
+      }
     }
 
     return `
@@ -467,7 +529,6 @@
     const paper = ENVELOPE_CONFIG.papers[state.paperSize] || ENVELOPE_CONFIG.papers.letter;
     const aspectRatio = paper.height / paper.width;
 
-    // Base preview width in pixels
     const baseWidthPx = 520;
     const baseHeightPx = baseWidthPx * aspectRatio;
 
@@ -489,7 +550,6 @@
       sheet.innerHTML = generateSheetSVG('onesided');
       elements.printRoot.appendChild(sheet);
     } else {
-      // Duplex: 2 printed sheets with page-break
       const sheet1 = document.createElement('div');
       sheet1.className = 'print-sheet';
       sheet1.innerHTML = generateSheetSVG('duplex-1');
@@ -552,4 +612,3 @@
   }
 
 })();
-

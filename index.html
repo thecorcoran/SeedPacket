@@ -21,7 +21,7 @@
       </svg>
       <div class="brand-text">
         <h1>Tapeless Seed Envelope Maker</h1>
-        <div class="brand-subtitle">Heirloom Catalog Template • Interlocking Pocket Fold • Zero Tape or Glue</div>
+        <div class="brand-subtitle">Heirloom Catalog Template • Full 8.5×11 Sheet Fold • Zero Tape, Glue or Waste</div>
       </div>
     </div>
     <div class="header-actions">
@@ -61,8 +61,8 @@
           <label for="input-seed-name" class="form-label">
             Seed / Plant Name <span class="required">*</span>
           </label>
-          <input type="text" id="input-seed-name" class="input-text" placeholder="e.g. Tomato, Sweet Basil, Sunflower" value="Tomato" required>
-          <div class="form-hint">Display name across top banner (auto-scales to fit).</div>
+          <input type="text" id="input-seed-name" class="input-text" placeholder="e.g. Sunflower, Tomato, Sweet Basil" value="Sunflower" required>
+          <div class="form-hint">Display name across top banner (auto-scales to fit without clipping).</div>
         </div>
 
         <!-- Latin Binomial Name -->
@@ -70,14 +70,14 @@
           <label for="input-latin-name" class="form-label">
             Latin Name <span class="form-hint">(Botanical Binomial)</span>
           </label>
-          <input type="text" id="input-latin-name" class="input-text" placeholder="e.g. Solanum lycopersicum" value="Solanum lycopersicum">
+          <input type="text" id="input-latin-name" class="input-text" placeholder="e.g. Helianthus annuus" value="Helianthus annuus">
           <div class="form-hint">Capitalizes genus and lowercases species on blur. Keeps "var." / "subsp." / "cv."</div>
         </div>
 
-        <!-- Variety -->
+        <!-- Cultivar / Variety -->
         <div class="form-group">
           <label for="input-variety" class="form-label">Cultivar / Variety</label>
-          <input type="text" id="input-variety" class="input-text" placeholder="e.g. Brandywine Heirloom, Genovese" value="Brandywine Heirloom">
+          <input type="text" id="input-variety" class="input-text" placeholder="e.g. Mammoth Russian, Brandywine" value="Mammoth Russian">
         </div>
 
         <!-- Harvest Date & Time -->
@@ -95,7 +95,7 @@
         <!-- Extra Notes -->
         <div class="form-group">
           <label for="input-notes" class="form-label">Extra Notes <span class="form-hint">(1-2 lines)</span></label>
-          <textarea id="input-notes" class="textarea-input" rows="2" placeholder="e.g. Garden Bed #2, 2026 crop, open-pollinated, 75 seeds">Indeterminate heirloom vine. Fermented 3 days, viability tested.</textarea>
+          <textarea id="input-notes" class="textarea-input" rows="2" placeholder="e.g. Garden Bed #2, 2026 crop, open-pollinated, 75 seeds">Giant golden heads up to 14 inches across. Birds and pollinators adore.</textarea>
         </div>
       </section>
 
@@ -121,20 +121,32 @@
         <div class="form-group">
           <label for="select-font" class="form-label">Plant Name Display Face</label>
           <select id="select-font" class="select-input">
+            <option value="'Abril Fatface', serif" selected>Abril Fatface (19th-Century Didone)</option>
             <option value="'Rye', serif">Rye (Victorian Western Wood Type)</option>
-            <option value="'Abril Fatface', serif">Abril Fatface (19th-Century Didone)</option>
             <option value="'IM Fell English', serif">IM Fell English (17th-Century Letterpress)</option>
             <option value="'Libre Caslon Text', serif">Libre Caslon (Classic Catalog Serif)</option>
           </select>
         </div>
       </section>
 
-      <!-- Section: Envelope Geometry & Paper -->
+      <!-- Section: Envelope Format & Geometry -->
       <section class="form-section">
         <h2 class="section-title">
-          <span>📐</span> Paper &amp; Envelope Size
+          <span>📐</span> Envelope Format &amp; Paper
         </h2>
-        
+
+        <!-- Template Style: Full Sheet (No-Cut) vs Cutout Net -->
+        <div class="form-group">
+          <label for="select-template-style" class="form-label">Template Style</label>
+          <select id="select-template-style" class="select-input">
+            <option value="fullsheet" selected>Full Sheet (No-Cut / 100% Folded) ★ Recommended</option>
+            <option value="cutout">Cutout Net (Scissors Required)</option>
+          </select>
+          <div id="template-style-hint" class="form-hint" style="color: #2e5339; font-weight: 500;">
+            ✓ Uses the entire 8.5×11 sheet. Zero cutting required—just fold along dashed lines!
+          </div>
+        </div>
+
         <div class="row-two-col">
           <div class="form-group">
             <label for="select-paper-size" class="form-label">Paper Size</label>
@@ -143,12 +155,13 @@
               <option value="a4">A4 (210 × 297 mm)</option>
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="group-finished-size" style="display: none;">
             <label for="select-envelope-size" class="form-label">Finished Size</label>
             <select id="select-envelope-size" class="select-input">
               <option value="small">Small (64 × 90 mm)</option>
               <option value="medium" selected>Medium (74 × 105 mm)</option>
               <option value="large">Large (84 × 120 mm)</option>
+              <option value="fullpage">Page-Max (100 × 135 mm)</option>
             </select>
           </div>
         </div>
@@ -157,10 +170,10 @@
           <label for="select-print-mode" class="form-label">Print Mode</label>
           <select id="select-print-mode" class="select-input">
             <option value="onesided" selected>One-sided (Default - folds outward)</option>
-            <option value="duplex">Two-sided (Duplex - art front, lines back)</option>
+            <option value="duplex">Two-sided (Duplex - front art, inside creases)</option>
           </select>
           <div id="duplex-note" class="duplex-notice-bar" style="display: none;">
-            <strong>Duplex Notice:</strong> Page 1 is outside art; Page 2 has mirrored fold lines. In your printer settings, choose <em>Flip on Long Edge</em> and <em>100% / Actual Size</em>.
+            <strong>Duplex Notice:</strong> Page 1 is outside art; Page 2 has mirrored fold lines. In printer settings, choose <em>Flip on Long Edge</em> and <em>100% / Actual Size</em>.
           </div>
         </div>
 
@@ -183,7 +196,7 @@
       <div class="preview-toolbar">
         <div class="toolbar-group">
           <span style="font-weight: 600;">Print Sheet Preview</span>
-          <span id="preview-mode-tag" style="color: #c4b5a3; font-style: italic;">(One-Sided Net)</span>
+          <span id="preview-mode-tag" style="color: #c4b5a3; font-style: italic;">(Full 8.5×11 Sheet • No-Cut)</span>
         </div>
 
         <!-- Page switcher tabs (for two-sided mode) -->
@@ -222,38 +235,38 @@
       <button id="modal-close-btn" class="modal-close">&times;</button>
       <h2 style="font-family: 'Rye', serif; margin-bottom: 6px; color: #382c23;">How to Fold Your Tapeless Envelope</h2>
       <p style="color: #6e6053; font-style: italic; margin-bottom: 20px;">
-        Designed to lock together securely and protect seeds with no adhesives, tape, or glue.
+        Designed to fold and lock together securely with zero glue, tape, or scissors required!
       </p>
 
       <div class="guide-step">
         <div class="step-num">1</div>
         <div class="step-text">
-          <h4>Cut Along Solid Outline</h4>
-          <p>Carefully cut around the solid outer perimeter using scissors. (No internal hole-punching or craft knives required!)</p>
+          <h4>Fold Side Flaps Inward</h4>
+          <p>Lay sheet printed-side down (or face up). Fold the left and right side flaps inward along the dashed vertical lines.</p>
         </div>
       </div>
 
       <div class="guide-step">
         <div class="step-num">2</div>
         <div class="step-text">
-          <h4>Fold Left and Right Flaps Inward</h4>
-          <p>Crease both side flaps inward along the dashed vertical lines toward the back of the envelope.</p>
+          <h4>Fold Top Corners (Tongue)</h4>
+          <p>Fold the top two corners inward along the 45° diagonal dashed lines to form a tapered triangular closure tongue.</p>
         </div>
       </div>
 
       <div class="guide-step">
         <div class="step-num">3</div>
         <div class="step-text">
-          <h4>Fold Bottom Flap Up &amp; Interlock</h4>
-          <p>Fold the bottom flap up along the dashed horizontal crease over the two side flaps. Slide the two locking side ears behind the folded side flaps into the side creases. This locks the back flat and creates an airtight seed pocket!</p>
+          <h4>Fold Bottom Up to Form Pocket</h4>
+          <p>Fold the entire bottom flap up along the dashed horizontal crease. This forms a deep, secure seed pocket with solid fold seams along the sides and bottom. Drop your seeds inside!</p>
         </div>
       </div>
 
       <div class="guide-step">
         <div class="step-num">4</div>
         <div class="step-text">
-          <h4>Insert Seeds &amp; Tuck Top Flap</h4>
-          <p>Drop your cleaned seeds into the pocket. Fold the top flap down and tuck the rounded tongue deeply into the pocket opening.</p>
+          <h4>Fold Top Down &amp; Tuck In</h4>
+          <p>Fold the top flap down along the horizontal crease and tuck the triangular tongue firmly into the bottom pocket. Your seeds are completely sealed!</p>
         </div>
       </div>
 
@@ -269,4 +282,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-
