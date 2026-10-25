@@ -1,26 +1,34 @@
 /**
  * Parametric Envelope Geometry & SVG Template Generator
- * Supports:
- * 1. Classic Heirloom Flap Envelope (Straight perimeter cut with overlapping side flaps)
- * 2. Gardener's Diamond Origami Pouch (100% Glue-Free, traditional cup fold)
- * 3. Interlocking Tuck-Slot Envelope (Self-sealing back slit)
- * 4. 1-Packet per Sheet (Large 3.3 × 4.8 in + Cut-Out Garden Stake Marker)
- * 5. 2-Packets per Sheet (Standard 2.7 × 3.85 in Twin Packets)
+ * 
+ * Folding Styles:
+ * 1. classic: Classic Heirloom Flap Envelope (Straight perimeter cut, overlapping side flaps)
+ * 2. petal: Interlocking 4-Petal Flower Pouch (100% Glue-Free pinwheel lock, looks like a flower bud)
+ * 3. origami: Gardener's Diamond Pouch (100% Glue-Free, traditional diagonal cup fold)
+ * 4. tuckslot: Interlocking Tuck-Slot Envelope (Deep bottom pocket with die-cut crescent slit)
+ * 
+ * Sheet Layouts:
+ * - single: 1 Packet per Sheet (Large 3.4 × 5.0 in + Cut-Out Garden Stake Plant Marker)
+ * - twin: 2 Packets per Sheet (Standard 2.7 × 3.85 in Twin Envelopes)
  */
 
 const ENVELOPE_CONFIG = {
   foldingStyles: {
     classic: {
       name: "Classic Heirloom Flap",
-      description: "Straight perimeter cut; side flaps fold behind and seal with glue stick, tape, or sticker."
+      description: "Traditional commercial seed envelope. Side flaps fold behind and seal with glue stick, tape, or sticker."
+    },
+    petal: {
+      name: "Interlocking 4-Petal Flower (100% Glue-Free)",
+      description: "Four curved flower petal flaps that weave clockwise into a self-locking pinwheel. Stunning presentation, zero tape or glue."
     },
     origami: {
       name: "Gardener's Diamond Pouch (100% Glue-Free)",
-      description: "Traditional gardener's cup pouch fold from a cut square. Never leaks, zero tape or glue."
+      description: "Traditional gardener's cup pouch fold from a cut square. Never leaks fine seeds, zero tape or glue."
     },
     tuckslot: {
       name: "Interlocking Tuck-Slot (Glue-Free)",
-      description: "Straight cut with a slit on the back pocket for the closure tongue to tuck into."
+      description: "Straight perimeter cut with a die-cut crescent slit on the back pocket for the closure tongue to tuck into."
     }
   },
 
@@ -76,7 +84,7 @@ function calculateAutoFitFontSize(text, maxWidthMm, maxFontMm, minFontMm, fontFa
 }
 
 /**
- * Generates the complete SVG string for the sheet.
+ * Main SVG Generator function called by app.js.
  */
 function generateSheetSVG(state) {
   const paper = ENVELOPE_CONFIG.papers[state.paperSize] || ENVELOPE_CONFIG.papers.letter;
@@ -84,7 +92,7 @@ function generateSheetSVG(state) {
   const style = state.foldingStyle || 'classic';
 
   let contentSvg = `
-    <!-- Paper Background with Safe Margin Boundary -->
+    <!-- Paper Sheet Background with Safe Margins -->
     <rect x="0" y="0" width="${paper.width}" height="${paper.height}" fill="#ffffff" stroke="none" />
   `;
 
@@ -94,32 +102,33 @@ function generateSheetSVG(state) {
     // =========================================================================
     const halfH = paper.height / 2;
     const packetMetrics = {
-      W: 68,
-      H: 96,
-      Sw: 36,
-      Ht: 18,
-      Hb: 20,
-      clipArtSize: 26
+      W: 70,
+      H: 98,
+      Sw: 38,
+      Ht: 22,
+      Hb: 22,
+      clipArtSize: 28,
+      isSmall: true
     };
 
     // Packet 1 (Top Half)
     const p1OriginY = (halfH - (packetMetrics.H + packetMetrics.Ht + packetMetrics.Hb)) / 2;
-    contentSvg += renderSinglePacketNet(state, packetMetrics, paper.width / 2, p1OriginY, style, 1);
+    contentSvg += renderPacketByStyle(state, packetMetrics, paper.width / 2, p1OriginY, style, 1);
 
-    // Center Division Line
+    // Center Division Cut Line
     contentSvg += `
       <!-- Horizontal Center Division Cut Line -->
-      <line x1="8" y1="${halfH.toFixed(2)}" x2="${(paper.width - 8).toFixed(2)}" y2="${halfH.toFixed(2)}"
-            stroke="#666666" stroke-width="0.32" stroke-dasharray="3 2" />
-      <text x="${(paper.width / 2).toFixed(2)}" y="${(halfH - 1.5).toFixed(2)}"
-            text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.6" fill="#756254">
+      <line x1="10" y1="${halfH.toFixed(2)}" x2="${(paper.width - 10).toFixed(2)}" y2="${halfH.toFixed(2)}"
+            stroke="#555555" stroke-width="0.36" stroke-dasharray="3 2" />
+      <text x="${(paper.width / 2).toFixed(2)}" y="${(halfH - 2).toFixed(2)}"
+            text-anchor="middle" font-family="'IM Fell English', serif" font-size="3.0" font-weight="bold" fill="#756254">
         ✂ ─ ─ ─ CUT SHEET IN HALF TO SEPARATE INTO TWO ENVELOPES ─ ─ ─ ✂
       </text>
     `;
 
     // Packet 2 (Bottom Half)
     const p2OriginY = halfH + p1OriginY;
-    contentSvg += renderSinglePacketNet(state, packetMetrics, paper.width / 2, p2OriginY, style, 2);
+    contentSvg += renderPacketByStyle(state, packetMetrics, paper.width / 2, p2OriginY, style, 2);
 
   } else {
     // =========================================================================
@@ -127,21 +136,24 @@ function generateSheetSVG(state) {
     // =========================================================================
     if (style === 'origami') {
       contentSvg += renderOrigamiDiamondSheet(state, paper);
+    } else if (style === 'petal') {
+      contentSvg += renderPetalFlowerSheet(state, paper);
     } else {
       // Classic or Tuck-Slot single large packet
       const packetMetrics = {
-        W: 82,
-        H: 122,
-        Sw: 44,
-        Ht: 34,
-        Hb: 42,
-        clipArtSize: 34
+        W: 86,
+        H: 126,
+        Sw: 46,
+        Ht: 36,
+        Hb: 44,
+        clipArtSize: 36,
+        isSmall: false
       };
-      const originY = 24;
-      contentSvg += renderSinglePacketNet(state, packetMetrics, paper.width / 2, originY, style, 1);
+      const originY = 22;
+      contentSvg += renderPacketByStyle(state, packetMetrics, paper.width / 2, originY, style, 1);
 
       // Garden Stake Marker Bonus in lower area
-      contentSvg += renderGardenStakeMarker(state, paper, originY + packetMetrics.Ht + packetMetrics.H + packetMetrics.Hb + 10);
+      contentSvg += renderGardenStakeMarker(state, paper, originY + packetMetrics.Ht + packetMetrics.H + packetMetrics.Hb + 8);
     }
   }
 
@@ -167,67 +179,77 @@ function generateSheetSVG(state) {
 }
 
 /**
- * Renders a single envelope net (Classic Flap or Tuck-Slot).
+ * Router to render an envelope net by folding style.
+ */
+function renderPacketByStyle(state, geom, centerX, originY, style, packetIndex) {
+  if (style === 'petal') {
+    return renderPetalPacketNet(state, geom, centerX, originY, packetIndex);
+  }
+  return renderSinglePacketNet(state, geom, centerX, originY, style, packetIndex);
+}
+
+/**
+ * Style 1 & 4: Classic Flap and Tuck-Slot Net
  */
 function renderSinglePacketNet(state, geom, centerX, originY, style, packetIndex) {
-  const { W, H, Sw, Ht, Hb } = geom;
+  const { W, H, Sw, Ht, Hb, isSmall } = geom;
   const frontX = centerX - (W / 2);
   const frontY = originY + Ht;
 
-  let netSvg = `<!-- Envelope Net ${packetIndex} -->`;
+  let netSvg = `<!-- Envelope Net ${packetIndex} (${style}) -->`;
 
-  // Perimeter Cut Path (Straight lines with tapered tabs)
+  // Perimeter Cut Path
   const cutPath = generateCleanCutPath(frontX, frontY, W, H, Sw, Ht, Hb, style);
-  netSvg += `<path d="${cutPath}" fill="none" stroke="#222222" stroke-width="0.36" stroke-linejoin="round" stroke-linecap="round" />`;
+  netSvg += `<path d="${cutPath}" fill="none" stroke="#222222" stroke-width="0.38" stroke-linejoin="round" stroke-linecap="round" />`;
 
   // Dashed Fold Lines
   if (state.showFoldLines !== false) {
-    // Vertical left & right creases
+    // Vertical side creases
     netSvg += `
       <line x1="${frontX.toFixed(2)}" y1="${frontY.toFixed(2)}" x2="${frontX.toFixed(2)}" y2="${(frontY + H).toFixed(2)}"
-            stroke="#8c7866" stroke-width="0.30" stroke-dasharray="3 2" />
+            stroke="#8c7866" stroke-width="0.32" stroke-dasharray="3 2" />
       <line x1="${(frontX + W).toFixed(2)}" y1="${frontY.toFixed(2)}" x2="${(frontX + W).toFixed(2)}" y2="${(frontY + H).toFixed(2)}"
-            stroke="#8c7866" stroke-width="0.30" stroke-dasharray="3 2" />
+            stroke="#8c7866" stroke-width="0.32" stroke-dasharray="3 2" />
       <!-- Horizontal top & bottom creases -->
       <line x1="${frontX.toFixed(2)}" y1="${frontY.toFixed(2)}" x2="${(frontX + W).toFixed(2)}" y2="${frontY.toFixed(2)}"
-            stroke="#8c7866" stroke-width="0.30" stroke-dasharray="3 2" />
+            stroke="#8c7866" stroke-width="0.32" stroke-dasharray="3 2" />
       <line x1="${frontX.toFixed(2)}" y1="${(frontY + H).toFixed(2)}" x2="${(frontX + W).toFixed(2)}" y2="${(frontY + H).toFixed(2)}"
-            stroke="#8c7866" stroke-width="0.30" stroke-dasharray="3 2" />
+            stroke="#8c7866" stroke-width="0.32" stroke-dasharray="3 2" />
     `;
   }
 
   // Tuck-Slot slit line if style === 'tuckslot'
   if (style === 'tuckslot') {
-    const slitY = frontY + H + (Hb * 0.55);
-    const slitHalfW = (W * 0.32);
+    const slitY = frontY + H + (Hb * 0.45);
+    const slitHalfW = (W * 0.35);
     netSvg += `
       <!-- Closure Slit -->
       <line x1="${(centerX - slitHalfW).toFixed(2)}" y1="${slitY.toFixed(2)}" x2="${(centerX + slitHalfW).toFixed(2)}" y2="${slitY.toFixed(2)}"
-            stroke="#b83b26" stroke-width="0.45" stroke-dasharray="2 1.5" />
-      <text x="${centerX.toFixed(2)}" y="${(slitY - 1.5).toFixed(2)}"
-            text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.0" fill="#b83b26">
-        ✂ SLICE SLIT FOR TUCK FLAP ✂
+            stroke="#b83b26" stroke-width="0.5" stroke-dasharray="2 1.5" />
+      <text x="${centerX.toFixed(2)}" y="${(slitY - 1.8).toFixed(2)}"
+            text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.4" font-weight="bold" fill="#b83b26">
+        ✂ SLICE DIE-CUT SLIT FOR TONGUE ✂
       </text>
     `;
   }
 
   // Front Panel Artwork
-  netSvg += renderFrontPanelArtwork(state, frontX, frontY, W, H, geom.clipArtSize);
+  netSvg += renderFrontPanelArtwork(state, frontX, frontY, W, H, geom.clipArtSize, isSmall);
 
-  // Folding Guidance Notes on Flaps
+  // Clear Flap Folding Guidance
   netSvg += `
     <!-- Back Flap Fold Instructions -->
     <text x="${centerX.toFixed(2)}" y="${(frontY + H + Hb - 4).toFixed(2)}"
-          text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.2" fill="#8c7866">
-      ${style === 'tuckslot' ? '▲ FOLD UP & INSERT TONGUE INTO SLIT' : '▲ FOLD UP OVER SIDE FLAPS & SECURE'}
+          text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.6" font-weight="bold" fill="#756254">
+      ${style === 'tuckslot' ? '▲ FOLD UP & INSERT TONGUE INTO SLIT ▲' : '▲ FOLD UP OVER SIDE FLAPS & SEAL SEAM ▲'}
     </text>
     <text x="${(frontX - Sw / 2).toFixed(2)}" y="${(frontY + H / 2).toFixed(2)}"
-          text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.0" fill="#a6998d"
+          text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.4" font-weight="bold" fill="#8c7866"
           transform="rotate(-90 ${(frontX - Sw / 2).toFixed(2)} ${(frontY + H / 2).toFixed(2)})">
       FOLD INWARD ➔
     </text>
     <text x="${(frontX + W + Sw / 2).toFixed(2)}" y="${(frontY + H / 2).toFixed(2)}"
-          text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.0" fill="#a6998d"
+          text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.4" font-weight="bold" fill="#8c7866"
           transform="rotate(90 ${(frontX + W + Sw / 2).toFixed(2)} ${(frontY + H / 2).toFixed(2)})">
       🠔 FOLD INWARD
     </text>
@@ -237,33 +259,41 @@ function renderSinglePacketNet(state, geom, centerX, originY, style, packetIndex
 }
 
 /**
- * Generates straight, easily cut perimeter path for envelopes.
+ * Generates straight, easily cut perimeter path for Classic and Tuck-slot.
  */
 function generateCleanCutPath(x0, y0, W, H, Sw, Ht, Hb, style) {
   const p = [];
-  const tongueW = W * 0.65;
+  const tongueW = style === 'tuckslot' ? W * 0.50 : W * 0.65;
   const tongueLeft = x0 + (W - tongueW) / 2;
   const tongueRight = x0 + (W + tongueW) / 2;
 
-  // Top Closure Flap (with tapered shoulders and rounded tongue)
+  // Top Closure Flap
   p.push(`M ${x0.toFixed(2)} ${y0.toFixed(2)}`);
-  p.push(`L ${(x0 + 4).toFixed(2)} ${(y0 - Ht * 0.6).toFixed(2)}`);
-  p.push(`L ${tongueLeft.toFixed(2)} ${(y0 - Ht).toFixed(2)}`);
-  p.push(`Q ${(x0 + W / 2).toFixed(2)} ${(y0 - Ht - 3).toFixed(2)} ${tongueRight.toFixed(2)} ${(y0 - Ht).toFixed(2)}`);
-  p.push(`L ${(x0 + W - 4).toFixed(2)} ${(y0 - Ht * 0.6).toFixed(2)}`);
+  p.push(`L ${(x0 + 4).toFixed(2)} ${(y0 - Ht * 0.5).toFixed(2)}`);
+  if (style === 'tuckslot') {
+    // Pointed arrow tongue
+    p.push(`L ${tongueLeft.toFixed(2)} ${(y0 - Ht * 0.7).toFixed(2)}`);
+    p.push(`L ${(x0 + W / 2).toFixed(2)} ${(y0 - Ht).toFixed(2)}`);
+    p.push(`L ${tongueRight.toFixed(2)} ${(y0 - Ht * 0.7).toFixed(2)}`);
+  } else {
+    // Rounded arch tongue
+    p.push(`L ${tongueLeft.toFixed(2)} ${(y0 - Ht).toFixed(2)}`);
+    p.push(`Q ${(x0 + W / 2).toFixed(2)} ${(y0 - Ht - 4).toFixed(2)} ${tongueRight.toFixed(2)} ${(y0 - Ht).toFixed(2)}`);
+  }
+  p.push(`L ${(x0 + W - 4).toFixed(2)} ${(y0 - Ht * 0.5).toFixed(2)}`);
   p.push(`L ${(x0 + W).toFixed(2)} ${y0.toFixed(2)}`);
 
-  // Right Side Flap (tapered top and bottom)
+  // Right Side Flap
   p.push(`L ${(x0 + W + Sw).toFixed(2)} ${(y0 + 8).toFixed(2)}`);
   p.push(`L ${(x0 + W + Sw).toFixed(2)} ${(y0 + H - 8).toFixed(2)}`);
   p.push(`L ${(x0 + W).toFixed(2)} ${(y0 + H).toFixed(2)}`);
 
-  // Bottom Pocket Flap (slightly tapered)
+  // Bottom Pocket Flap
   p.push(`L ${(x0 + W - 3).toFixed(2)} ${(y0 + H + Hb).toFixed(2)}`);
   p.push(`L ${(x0 + 3).toFixed(2)} ${(y0 + H + Hb).toFixed(2)}`);
   p.push(`L ${x0.toFixed(2)} ${(y0 + H).toFixed(2)}`);
 
-  // Left Side Flap (tapered bottom and top)
+  // Left Side Flap
   p.push(`L ${(x0 - Sw).toFixed(2)} ${(y0 + H - 8).toFixed(2)}`);
   p.push(`L ${(x0 - Sw).toFixed(2)} ${(y0 + 8).toFixed(2)}`);
   p.push("Z");
@@ -272,10 +302,67 @@ function generateCleanCutPath(x0, y0, W, H, Sw, Ht, Hb, style) {
 }
 
 /**
- * Renders the Gardener's Diamond Origami Seed Pouch (100% Glue-Free).
+ * Style 2: Interlocking 4-Petal Flower Pouch (100% Glue-Free)
+ * Four curved petal flaps that fold clockwise into a pinwheel lock.
+ */
+function renderPetalFlowerSheet(state, paper) {
+  const S = 94; // Center square front size 94 × 94 mm
+  const R = 44; // Petal radius depth 44 mm
+  const centerX = paper.width / 2;
+  const centerY = 115;
+  const x0 = centerX - S / 2;
+  const y0 = centerY - S / 2;
+
+  let svg = `<!-- Interlocking 4-Petal Flower Pouch Net -->`;
+
+  // Draw 4 curved petals around the central square
+  const p = [];
+  // Top-left corner of center square
+  p.push(`M ${x0.toFixed(2)} ${y0.toFixed(2)}`);
+  // Top Petal Arc
+  p.push(`C ${(x0 - 6).toFixed(2)} ${(y0 - R * 0.9).toFixed(2)}, ${(x0 + S + 6).toFixed(2)} ${(y0 - R * 0.9).toFixed(2)}, ${(x0 + S).toFixed(2)} ${y0.toFixed(2)}`);
+  // Right Petal Arc
+  p.push(`C ${(x0 + S + R * 0.9).toFixed(2)} ${(y0 - 6).toFixed(2)}, ${(x0 + S + R * 0.9).toFixed(2)} ${(y0 + S + 6).toFixed(2)}, ${(x0 + S).toFixed(2)} ${(y0 + S).toFixed(2)}`);
+  // Bottom Petal Arc
+  p.push(`C ${(x0 + S + 6).toFixed(2)} ${(y0 + S + R * 0.9).toFixed(2)}, ${(x0 - 6).toFixed(2)} ${(y0 + S + R * 0.9).toFixed(2)}, ${x0.toFixed(2)} ${(y0 + S).toFixed(2)}`);
+  // Left Petal Arc
+  p.push(`C ${(x0 - R * 0.9).toFixed(2)} ${(y0 + S + 6).toFixed(2)}, ${(x0 - R * 0.9).toFixed(2)} ${(y0 - 6).toFixed(2)}, ${x0.toFixed(2)} ${y0.toFixed(2)}`);
+  p.push("Z");
+
+  svg += `<path d="${p.join(' ')}" fill="#ffffff" stroke="#222222" stroke-width="0.4" stroke-linejoin="round" />`;
+
+  // Dashed fold lines for the center square
+  if (state.showFoldLines !== false) {
+    svg += `
+      <rect x="${x0.toFixed(2)}" y="${y0.toFixed(2)}" width="${S}" height="${S}"
+            fill="none" stroke="#8c7866" stroke-width="0.32" stroke-dasharray="3 2" />
+    `;
+  }
+
+  // Front Panel Artwork inside the center square
+  svg += renderFrontPanelArtwork(state, x0, y0, S, S, 32, false);
+
+  // Petal fold instructions
+  svg += `
+    <g font-family="'IM Fell English', serif" font-size="2.4" font-weight="bold" fill="#756254" text-anchor="middle">
+      <text x="${centerX.toFixed(2)}" y="${(y0 - 10).toFixed(2)}">[1] FOLD DOWN</text>
+      <text x="${(x0 + S + 14).toFixed(2)}" y="${centerY.toFixed(2)}" transform="rotate(90 ${(x0 + S + 14).toFixed(2)} ${centerY.toFixed(2)})">[2] FOLD LEFT</text>
+      <text x="${centerX.toFixed(2)}" y="${(y0 + S + 16).toFixed(2)}">[3] FOLD UP</text>
+      <text x="${(x0 - 14).toFixed(2)}" y="${centerY.toFixed(2)}" transform="rotate(-90 ${(x0 - 14).toFixed(2)} ${centerY.toFixed(2)})">[4] TUCK UNDER [1]</text>
+    </g>
+  `;
+
+  // Cut-out Garden Stake Plant Marker below
+  svg += renderGardenStakeMarker(state, paper, centerY + S / 2 + R + 10);
+
+  return svg;
+}
+
+/**
+ * Style 3: Gardener's Diamond Origami Seed Pouch (100% Glue-Free)
  */
 function renderOrigamiDiamondSheet(state, paper) {
-  const sqSize = 184; // 184 mm square fits well inside Letter/A4 with ample margins
+  const sqSize = 184; // 184 mm square
   const originX = (paper.width - sqSize) / 2;
   const originY = 16;
 
@@ -284,9 +371,9 @@ function renderOrigamiDiamondSheet(state, paper) {
   // Outer Cut Square
   svg += `
     <rect x="${originX.toFixed(2)}" y="${originY.toFixed(2)}" width="${sqSize.toFixed(2)}" height="${sqSize.toFixed(2)}"
-          fill="none" stroke="#222222" stroke-width="0.36" stroke-dasharray="none" />
+          fill="none" stroke="#222222" stroke-width="0.4" stroke-dasharray="none" />
     <text x="${(paper.width / 2).toFixed(2)}" y="${(originY - 4).toFixed(2)}"
-          text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.8" fill="#52443a">
+          text-anchor="middle" font-family="'IM Fell English', serif" font-size="3.0" font-weight="bold" fill="#52443a">
       ✂ CUT OUT SQUARE ALONG SOLID PERIMETER • ZERO GLUE OR TAPE REQUIRED ✂
     </text>
   `;
@@ -295,32 +382,32 @@ function renderOrigamiDiamondSheet(state, paper) {
   svg += `
     <!-- Diagonal Fold Line (Corner to Corner) -->
     <line x1="${originX.toFixed(2)}" y1="${originY.toFixed(2)}" x2="${(originX + sqSize).toFixed(2)}" y2="${(originY + sqSize).toFixed(2)}"
-          stroke="#8c7866" stroke-width="0.30" stroke-dasharray="3 2" />
+          stroke="#8c7866" stroke-width="0.32" stroke-dasharray="3 2" />
     <line x1="${(originX + sqSize).toFixed(2)}" y1="${originY.toFixed(2)}" x2="${originX.toFixed(2)}" y2="${(originY + sqSize).toFixed(2)}"
-          stroke="#8c7866" stroke-width="0.30" stroke-dasharray="3 2" />
+          stroke="#8c7866" stroke-width="0.32" stroke-dasharray="3 2" />
   `;
 
   // Front Panel Artwork oriented in the lower triangle
-  const frontW = 76;
-  const frontH = 68;
+  const frontW = 82;
+  const frontH = 76;
   const frontX = (paper.width - frontW) / 2;
-  const frontY = originY + sqSize - frontH - 12;
+  const frontY = originY + sqSize - frontH - 10;
 
-  svg += renderFrontPanelArtwork(state, frontX, frontY, frontW, frontH, 24);
+  svg += renderFrontPanelArtwork(state, frontX, frontY, frontW, frontH, 26, true);
 
   // Step-by-Step Visual Folding Diagram in the lower margin
-  const diagramY = originY + sqSize + 12;
+  const diagramY = originY + sqSize + 10;
   svg += `
     <g class="origami-instructions" transform="translate(0, ${diagramY.toFixed(2)})">
       <rect x="${originX.toFixed(2)}" y="0" width="${sqSize.toFixed(2)}" height="54"
             fill="#fcfaf5" stroke="#8c7866" stroke-width="0.4" rx="1" />
       <text x="${(paper.width / 2).toFixed(2)}" y="6"
-            text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.6" font-weight="bold" fill="#3a3028">
-        HOW TO FOLD THE GARDENER'S SEED POUCH (100% TAPLESS &amp; LEAK-PROOF)
+            text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.8" font-weight="bold" fill="#3a3028">
+        HOW TO FOLD THE GARDENER'S SEED POUCH (100% TAPELESS &amp; LEAK-PROOF)
       </text>
 
       <!-- Step 1 -->
-      <g transform="translate(${(originX + 16).toFixed(2)}, 14)" font-family="'IM Fell English', serif" font-size="2.1" fill="#52443a">
+      <g transform="translate(${(originX + 16).toFixed(2)}, 14)" font-family="'IM Fell English', serif" font-size="2.4" fill="#52443a">
         <text x="0" y="0" font-weight="bold">[1] Cut Square</text>
         <text x="0" y="5">Fold in half</text>
         <text x="0" y="9">corner to corner</text>
@@ -328,7 +415,7 @@ function renderOrigamiDiamondSheet(state, paper) {
       </g>
 
       <!-- Step 2 -->
-      <g transform="translate(${(originX + 58).toFixed(2)}, 14)" font-family="'IM Fell English', serif" font-size="2.1" fill="#52443a">
+      <g transform="translate(${(originX + 58).toFixed(2)}, 14)" font-family="'IM Fell English', serif" font-size="2.4" fill="#52443a">
         <text x="0" y="0" font-weight="bold">[2] Left Point</text>
         <text x="0" y="5">Fold left tip</text>
         <text x="0" y="9">horizontally to</text>
@@ -336,7 +423,7 @@ function renderOrigamiDiamondSheet(state, paper) {
       </g>
 
       <!-- Step 3 -->
-      <g transform="translate(${(originX + 102).toFixed(2)}, 14)" font-family="'IM Fell English', serif" font-size="2.1" fill="#52443a">
+      <g transform="translate(${(originX + 102).toFixed(2)}, 14)" font-family="'IM Fell English', serif" font-size="2.4" fill="#52443a">
         <text x="0" y="0" font-weight="bold">[3] Right Point</text>
         <text x="0" y="5">Fold right tip</text>
         <text x="0" y="9">across to the</text>
@@ -344,7 +431,7 @@ function renderOrigamiDiamondSheet(state, paper) {
       </g>
 
       <!-- Step 4 -->
-      <g transform="translate(${(originX + 144).toFixed(2)}, 14)" font-family="'IM Fell English', serif" font-size="2.1" fill="#52443a">
+      <g transform="translate(${(originX + 144).toFixed(2)}, 14)" font-family="'IM Fell English', serif" font-size="2.4" fill="#52443a">
         <text x="0" y="0" font-weight="bold">[4] Tuck &amp; Seal</text>
         <text x="0" y="5">Tuck top flap</text>
         <text x="0" y="9">into front pocket.</text>
@@ -357,13 +444,13 @@ function renderOrigamiDiamondSheet(state, paper) {
 }
 
 /**
- * Renders the Cut-Out Garden Stake Plant Marker bonus in empty sheet space.
+ * Bonus Cut-Out Garden Stake Plant Marker.
  */
 function renderGardenStakeMarker(state, paper, startY) {
-  const markerW = 160;
-  const markerH = 34;
+  const markerW = 164;
+  const markerH = 36;
   const markerX = (paper.width - markerW) / 2;
-  const markerY = Math.min(startY, paper.height - markerH - 8);
+  const markerY = Math.min(startY, paper.height - markerH - 6);
 
   const seedName = (state.seedName || "HEIRLOOM SEED").toUpperCase();
   const latin = state.latinName ? state.latinName : "";
@@ -374,26 +461,26 @@ function renderGardenStakeMarker(state, paper, startY) {
     <!-- Bonus Garden Stake Plant Marker -->
     <g class="garden-stake-marker" transform="translate(${markerX.toFixed(2)}, ${markerY.toFixed(2)})">
       <rect x="0" y="0" width="${markerW}" height="${markerH}"
-            fill="#fcfaf5" stroke="#2b231d" stroke-width="0.35" stroke-dasharray="3 2" rx="0.5" />
-      <text x="4" y="-2" font-family="'IM Fell English', serif" font-size="2.2" fill="#756254">
+            fill="#fcfaf5" stroke="#2b231d" stroke-width="0.38" stroke-dasharray="3 2" rx="0.5" />
+      <text x="4" y="-2" font-family="'IM Fell English', serif" font-size="2.4" font-weight="bold" fill="#756254">
         ✂ CUT-OUT GARDEN STAKE / PLANT MARKER (TAPE TO WOODEN STAKE OR POPSICLE STICK)
       </text>
 
       <!-- Content -->
-      <text x="8" y="10" font-family="${state.fontFamily || "'Abril Fatface', serif"}" font-size="4.4" font-weight="bold" fill="#1e1814">
+      <text x="8" y="11" font-family="${state.fontFamily || "'Abril Fatface', serif"}" font-size="5.2" font-weight="bold" fill="#1e1814">
         ${escapeXml(seedName)}
       </text>
-      <text x="8" y="17" font-family="'IM Fell English', serif" font-size="2.8" font-style="italic" fill="#52443a">
+      <text x="8" y="19" font-family="'IM Fell English', serif" font-size="3.2" font-style="italic" fill="#52443a">
         ${escapeXml(latin)} ${escapeXml(variety)}
       </text>
-      <text x="8" y="24" font-family="'IM Fell English', serif" font-size="2.6" font-weight="bold" fill="#2b231d">
+      <text x="8" y="27" font-family="'IM Fell English', serif" font-size="3.0" font-weight="bold" fill="#2b231d">
         ${escapeXml(dateStr)}
       </text>
 
-      <line x1="${markerW - 46}" y1="4" x2="${markerW - 46}" y2="${markerH - 4}" stroke="#8c7866" stroke-width="0.3" stroke-dasharray="2 1" />
-      <text x="${markerW - 40}" y="12" font-family="'IM Fell English', serif" font-size="2.2" fill="#756254">Sown Date: ________</text>
-      <text x="${markerW - 40}" y="20" font-family="'IM Fell English', serif" font-size="2.2" fill="#756254">Sprouted: _________</text>
-      <text x="${markerW - 40}" y="28" font-family="'IM Fell English', serif" font-size="2.2" fill="#756254">Row / Bed: ________</text>
+      <line x1="${markerW - 48}" y1="4" x2="${markerW - 48}" y2="${markerH - 4}" stroke="#8c7866" stroke-width="0.3" stroke-dasharray="2 1" />
+      <text x="${markerW - 42}" y="13" font-family="'IM Fell English', serif" font-size="2.6" fill="#756254">Sown Date: ________</text>
+      <text x="${markerW - 42}" y="22" font-family="'IM Fell English', serif" font-size="2.6" fill="#756254">Sprouted: _________</text>
+      <text x="${markerW - 42}" y="31" font-family="'IM Fell English', serif" font-size="2.6" fill="#756254">Row / Bed: ________</text>
     </g>
   `;
 }
@@ -410,9 +497,10 @@ function formatPackagedDate(state) {
 
 /**
  * Generates the Vintage Front Artwork SVG group for a packet.
- * Strict dynamic vertical layout ensuring no overlapping elements.
+ * Strict collision-free dynamic vertical rhythm algorithm:
+ * Computes top-down headers, bottom-up footers, and centers the artwork in the remaining space.
  */
-function renderFrontPanelArtwork(state, x0, y0, W, H, maxClipSize) {
+function renderFrontPanelArtwork(state, x0, y0, W, H, maxClipSize, isSmall) {
   const fontHeader = state.fontFamily || "'Abril Fatface', serif";
   const fontBody = "'IM Fell English', 'Libre Caslon Text', 'Georgia', serif";
 
@@ -421,80 +509,120 @@ function renderFrontPanelArtwork(state, x0, y0, W, H, maxClipSize) {
   const innerY = y0 + margin;
   const innerW = W - (margin * 2);
   const innerH = H - (margin * 2);
-
   const centerX = x0 + (W / 2);
 
-  // Auto-fit Display Title
+  // Content Flags
   const seedName = state.seedName || "HEIRLOOM SEED";
-  const maxTitleWidth = innerW - 8;
-  const maxFontMm = innerH > 80 ? 6.8 : 5.4;
-  const titleFontSize = calculateAutoFitFontSize(seedName, maxTitleWidth, maxFontMm, 3.8, fontHeader);
-
-  // Latin Name
   const hasLatinName = state.latinName && state.latinName.trim().length > 0;
-  const latinFontSize = hasLatinName
-    ? calculateAutoFitFontSize(state.latinName, innerW - 10, 3.2, 2.4, 'fell')
-    : 0;
-
-  // Cultivar / Variety
   const hasVariety = state.variety && state.variety.trim().length > 0;
+  const hasNotes = state.notes && state.notes.trim().length > 0;
 
-  // Dynamic Vertical Stacking Calculations
-  const bannerY = innerY + 3.8;
-  const titleY = bannerY + 6.8;
+  // Active Badges
+  const activeBadges = [];
+  if (state.badgeOpenPollinated) activeBadges.push("OPEN POLLINATED");
+  if (state.badgeTestedGermination) activeBadges.push("TESTED GERMINATION");
+  if (state.badgeHeirloom) activeBadges.push("HEIRLOOM");
+  if (state.badgeOrganic) activeBadges.push("ORGANIC");
 
-  let nextY = titleY + 2.0;
+  // =========================================================================
+  // STRICT COLLISION-FREE VERTICAL STACKING CALCULATION
+  // =========================================================================
 
+  // --- TOP ELEMENTS (Stacking DOWNWARDS) ---
+  let topY = innerY + (isSmall ? 4.0 : 5.0);
+
+  // 1. Catalog Header Banner
+  const bannerFontSize = isSmall ? 2.6 : 3.4;
+  const bannerY = topY + bannerFontSize;
+  topY = bannerY + (isSmall ? 3.0 : 4.5);
+
+  // 2. Main Title (Plant / Seed Display Name)
+  const maxTitleFont = isSmall ? 7.5 : 10.5;
+  const minTitleFont = isSmall ? 4.6 : 5.8;
+  const titleFontSize = calculateAutoFitFontSize(seedName, innerW - 8, maxTitleFont, minTitleFont, fontHeader);
+  const titleY = topY + titleFontSize;
+  topY = titleY + (isSmall ? 2.5 : 3.5);
+
+  // 3. Latin Binomial Name
   let latinY = 0;
+  const latinFontSize = isSmall ? 3.0 : 4.0;
   if (hasLatinName) {
-    latinY = nextY + 3.4;
-    nextY = latinY + 1.0;
+    latinY = topY + latinFontSize;
+    topY = latinY + (isSmall ? 2.2 : 3.0);
   }
 
+  // 4. Cultivar / Variety
   let varietyY = 0;
+  const varietyFontSize = isSmall ? 2.8 : 3.6;
   if (hasVariety) {
-    varietyY = nextY + 3.4;
-    nextY = varietyY + 1.0;
+    varietyY = topY + varietyFontSize;
+    topY = varietyY + (isSmall ? 2.5 : 3.5);
   }
 
-  // Artwork box position and sizing
-  const availableArtH = Math.max(18, innerH - (nextY - innerY) - 34);
-  const artSize = Math.min(maxClipSize || 32, availableArtH, innerW * 0.58);
+  // --- BOTTOM ELEMENTS (Stacking UPWARDS) ---
+  let botY = innerY + innerH - (isSmall ? 3.0 : 4.0);
+
+  // 5. Trust Badges / Tailpiece
+  const footerFontSize = isSmall ? 2.4 : 3.0;
+  const footerY = botY;
+  botY = footerY - footerFontSize - (isSmall ? 3.0 : 4.5);
+
+  // 6. Notes (1 or 2 lines)
+  const notesLines = [];
+  const notesFontSize = isSmall ? 2.6 : 3.2;
+  const notesLineSpacing = notesFontSize + 1.2;
+  let notesLine1Y = 0, notesLine2Y = 0;
+
+  if (hasNotes) {
+    const maxChars = innerW > 70 ? 46 : 32;
+    const lines = wrapTextIntoLines(state.notes.trim(), maxChars);
+    if (lines.length > 1) {
+      notesLines.push(lines[0], lines[1]);
+      notesLine2Y = botY;
+      notesLine1Y = notesLine2Y - notesLineSpacing;
+      botY = notesLine1Y - notesFontSize - (isSmall ? 3.0 : 4.5);
+    } else if (lines.length === 1) {
+      notesLines.push(lines[0]);
+      notesLine1Y = botY;
+      botY = notesLine1Y - notesFontSize - (isSmall ? 3.0 : 4.5);
+    }
+  }
+
+  // 7. Packaged Date Banner
+  const dateFontSize = isSmall ? 2.8 : 3.4;
+  const dateTextY = botY;
+  const dateBoxTopY = dateTextY - dateFontSize - 1.2;
+  const dateBoxBotY = dateTextY + 2.2;
+  botY = dateBoxTopY - (isSmall ? 3.0 : 4.5);
+
+  // --- ARTWORK CENTERING (In remaining space between topY and botY) ---
+  const artAvailableH = Math.max(16, botY - topY);
+  const artSize = Math.min(maxClipSize || 36, artAvailableH, innerW * 0.58);
   const clipBoxX = centerX - (artSize / 2);
-  const clipBoxY = nextY + 2.0;
+  const clipBoxY = topY + (artAvailableH - artSize) / 2;
 
-  const afterArtY = clipBoxY + artSize;
-
-  // Harvest / Packaged Date
-  const dateY = afterArtY + 3.5;
-  const dateStr = formatPackagedDate(state);
-
-  // Notes Y
-  const notesY = dateY + 6.2;
-
-  // Badges / Trust Marks
-  const footerY = innerY + innerH - 3.0;
-
-  // Render SVG Elements
+  // =========================================================================
+  // SVG RENDERING
+  // =========================================================================
   let svg = `
     <g class="vintage-front-panel" fill="#2b231d" stroke="none">
       <!-- Outer Double Border with Corner Florets -->
       <rect x="${innerX.toFixed(2)}" y="${innerY.toFixed(2)}" width="${innerW.toFixed(2)}" height="${innerH.toFixed(2)}"
-            fill="#fcfaf5" stroke="#2b231d" stroke-width="0.65" rx="0.5" />
-      <rect x="${(innerX + 1.0).toFixed(2)}" y="${(innerY + 1.0).toFixed(2)}" width="${(innerW - 2.0).toFixed(2)}" height="${(innerH - 2.0).toFixed(2)}"
-            fill="none" stroke="#2b231d" stroke-width="0.25" stroke-dasharray="2 1" />
+            fill="#fcfaf5" stroke="#2b231d" stroke-width="0.75" rx="0.5" />
+      <rect x="${(innerX + 1.2).toFixed(2)}" y="${(innerY + 1.2).toFixed(2)}" width="${(innerW - 2.4).toFixed(2)}" height="${(innerH - 2.4).toFixed(2)}"
+            fill="none" stroke="#2b231d" stroke-width="0.3" stroke-dasharray="2.5 1.2" />
 
       <!-- Corner Rosettes -->
-      <g stroke="#2b231d" stroke-width="0.3" fill="none">
-        <circle cx="${(innerX + 2.5).toFixed(2)}" cy="${(innerY + 2.5).toFixed(2)}" r="1.1" />
-        <circle cx="${(innerX + innerW - 2.5).toFixed(2)}" cy="${(innerY + 2.5).toFixed(2)}" r="1.1" />
-        <circle cx="${(innerX + 2.5).toFixed(2)}" cy="${(innerY + innerH - 2.5).toFixed(2)}" r="1.1" />
-        <circle cx="${(innerX + innerW - 2.5).toFixed(2)}" cy="${(innerY + innerH - 2.5).toFixed(2)}" r="1.1" />
+      <g stroke="#2b231d" stroke-width="0.35" fill="none">
+        <circle cx="${(innerX + 3.0).toFixed(2)}" cy="${(innerY + 3.0).toFixed(2)}" r="1.3" />
+        <circle cx="${(innerX + innerW - 3.0).toFixed(2)}" cy="${(innerY + 3.0).toFixed(2)}" r="1.3" />
+        <circle cx="${(innerX + 3.0).toFixed(2)}" cy="${(innerY + innerH - 3.0).toFixed(2)}" r="1.3" />
+        <circle cx="${(innerX + innerW - 3.0).toFixed(2)}" cy="${(innerY + innerH - 3.0).toFixed(2)}" r="1.3" />
       </g>
 
       <!-- Vintage Catalog Banner Header -->
       <text x="${centerX.toFixed(2)}" y="${bannerY.toFixed(2)}"
-            text-anchor="middle" font-family="${fontBody}" font-size="2.4" font-weight="bold" letter-spacing="1.2" fill="#52443a">
+            text-anchor="middle" font-family="${fontBody}" font-size="${bannerFontSize.toFixed(2)}" font-weight="bold" letter-spacing="1.4" fill="#52443a">
         ✦ HEIRLOOM SEED COLLECTION ✦
       </text>
 
@@ -508,16 +636,16 @@ function renderFrontPanelArtwork(state, x0, y0, W, H, maxClipSize) {
 
   // Latin Name
   if (hasLatinName) {
-    const halfSpan = Math.min(innerW * 0.38, 22);
+    const halfSpan = Math.min(innerW * 0.40, 24);
     svg += `
       <g class="latin-name-block">
-        <line x1="${(centerX - halfSpan).toFixed(2)}" y1="${(latinY - 0.7).toFixed(2)}" x2="${(centerX - halfSpan + 4).toFixed(2)}" y2="${(latinY - 0.7).toFixed(2)}" stroke="#8c7866" stroke-width="0.25" />
+        <line x1="${(centerX - halfSpan).toFixed(2)}" y1="${(latinY - 0.9).toFixed(2)}" x2="${(centerX - halfSpan + 5).toFixed(2)}" y2="${(latinY - 0.9).toFixed(2)}" stroke="#8c7866" stroke-width="0.3" />
         <text x="${centerX.toFixed(2)}" y="${latinY.toFixed(2)}"
               text-anchor="middle" font-family="${fontBody}" font-size="${latinFontSize.toFixed(2)}" font-style="italic"
-              letter-spacing="0.3" fill="#52443a">
+              letter-spacing="0.4" fill="#52443a">
           ❦ ${escapeXml(state.latinName)} ❦
         </text>
-        <line x1="${(centerX + halfSpan - 4).toFixed(2)}" y1="${(latinY - 0.7).toFixed(2)}" x2="${(centerX + halfSpan).toFixed(2)}" y2="${(latinY - 0.7).toFixed(2)}" stroke="#8c7866" stroke-width="0.25" />
+        <line x1="${(centerX + halfSpan - 5).toFixed(2)}" y1="${(latinY - 0.9).toFixed(2)}" x2="${(centerX + halfSpan).toFixed(2)}" y2="${(latinY - 0.9).toFixed(2)}" stroke="#8c7866" stroke-width="0.3" />
       </g>
     `;
   }
@@ -526,7 +654,7 @@ function renderFrontPanelArtwork(state, x0, y0, W, H, maxClipSize) {
   if (hasVariety) {
     svg += `
       <text x="${centerX.toFixed(2)}" y="${varietyY.toFixed(2)}"
-            text-anchor="middle" font-family="${fontBody}" font-size="2.8" font-style="italic" fill="#3a3028">
+            text-anchor="middle" font-family="${fontBody}" font-size="${varietyFontSize.toFixed(2)}" font-style="italic" fill="#3a3028">
         var. &#8220;${escapeXml(state.variety.trim())}&#8221;
       </text>
     `;
@@ -568,58 +696,57 @@ function renderFrontPanelArtwork(state, x0, y0, W, H, maxClipSize) {
   }
 
   // Packaged Date Banner
+  const dateStr = formatPackagedDate(state);
   svg += `
-    <g class="harvest-meta" transform="translate(0, ${dateY.toFixed(2)})">
-      <line x1="${(innerX + 4).toFixed(2)}" y1="0" x2="${(innerX + innerW - 4).toFixed(2)}" y2="0" stroke="#2b231d" stroke-width="0.35" />
-      <line x1="${(innerX + 4).toFixed(2)}" y1="0.6" x2="${(innerX + innerW - 4).toFixed(2)}" y2="0.6" stroke="#2b231d" stroke-width="0.15" />
-      <text x="${centerX.toFixed(2)}" y="3.4"
-            text-anchor="middle" font-family="${fontBody}" font-size="2.6" font-weight="600" letter-spacing="0.5" fill="#2b231d">
+    <g class="harvest-meta">
+      <line x1="${(innerX + 4).toFixed(2)}" y1="${dateBoxTopY.toFixed(2)}" x2="${(innerX + innerW - 4).toFixed(2)}" y2="${dateBoxTopY.toFixed(2)}" stroke="#2b231d" stroke-width="0.4" />
+      <line x1="${(innerX + 4).toFixed(2)}" y1="${(dateBoxTopY + 0.7).toFixed(2)}" x2="${(innerX + innerW - 4).toFixed(2)}" y2="${(dateBoxTopY + 0.7).toFixed(2)}" stroke="#2b231d" stroke-width="0.2" />
+      <text x="${centerX.toFixed(2)}" y="${dateTextY.toFixed(2)}"
+            text-anchor="middle" font-family="${fontBody}" font-size="${dateFontSize.toFixed(2)}" font-weight="600" letter-spacing="0.6" fill="#2b231d">
         ${escapeXml(dateStr)}
       </text>
-      <line x1="${(innerX + 4).toFixed(2)}" y1="4.5" x2="${(innerX + innerW - 4).toFixed(2)}" y2="4.5" stroke="#2b231d" stroke-width="0.15" />
-      <line x1="${(innerX + 4).toFixed(2)}" y1="5.1" x2="${(innerX + innerW - 4).toFixed(2)}" y2="5.1" stroke="#2b231d" stroke-width="0.35" />
+      <line x1="${(innerX + 4).toFixed(2)}" y1="${(dateBoxBotY - 0.7).toFixed(2)}" x2="${(innerX + innerW - 4).toFixed(2)}" y2="${(dateBoxBotY - 0.7).toFixed(2)}" stroke="#2b231d" stroke-width="0.2" />
+      <line x1="${(innerX + 4).toFixed(2)}" y1="${dateBoxBotY.toFixed(2)}" x2="${(innerX + innerW - 4).toFixed(2)}" y2="${dateBoxBotY.toFixed(2)}" stroke="#2b231d" stroke-width="0.4" />
     </g>
   `;
 
-  // Extra Notes (1-2 lines)
-  if (state.notes && state.notes.trim()) {
-    const rawNotes = state.notes.trim();
-    const maxChars = innerW > 70 ? 46 : 34;
-    const lines = wrapTextIntoLines(rawNotes, maxChars);
-    svg += `
-      <g class="packet-notes" transform="translate(0, ${notesY.toFixed(2)})">
-    `;
-    lines.slice(0, 2).forEach((line, idx) => {
+  // Notes
+  if (notesLines.length > 0) {
+    svg += `<g class="packet-notes">`;
+    if (notesLines.length === 1) {
       svg += `
-        <text x="${centerX.toFixed(2)}" y="${(idx * 3.2).toFixed(2)}"
-              text-anchor="middle" font-family="${fontBody}" font-size="2.6" font-style="italic" fill="#5c4d41">
-          ${escapeXml(line)}
+        <text x="${centerX.toFixed(2)}" y="${notesLine1Y.toFixed(2)}"
+              text-anchor="middle" font-family="${fontBody}" font-size="${notesFontSize.toFixed(2)}" font-style="italic" fill="#5c4d41">
+          ${escapeXml(notesLines[0])}
         </text>
       `;
-    });
+    } else {
+      svg += `
+        <text x="${centerX.toFixed(2)}" y="${notesLine1Y.toFixed(2)}"
+              text-anchor="middle" font-family="${fontBody}" font-size="${notesFontSize.toFixed(2)}" font-style="italic" fill="#5c4d41">
+          ${escapeXml(notesLines[0])}
+        </text>
+        <text x="${centerX.toFixed(2)}" y="${notesLine2Y.toFixed(2)}"
+              text-anchor="middle" font-family="${fontBody}" font-size="${notesFontSize.toFixed(2)}" font-style="italic" fill="#5c4d41">
+          ${escapeXml(notesLines[1])}
+        </text>
+      `;
+    }
     svg += `</g>`;
   }
 
-  // Optional Badges Section (Item 6: Removed hardcoded Open Pollinated / Germination; now toggleable options)
-  const activeBadges = [];
-  if (state.badgeOpenPollinated) activeBadges.push("OPEN POLLINATED");
-  if (state.badgeTestedGermination) activeBadges.push("TESTED GERMINATION");
-  if (state.badgeHeirloom) activeBadges.push("HEIRLOOM");
-  if (state.badgeOrganic) activeBadges.push("ORGANIC");
-
+  // Trust Badges / Flourish Footer
   if (activeBadges.length > 0) {
     const badgeText = `★ ${activeBadges.join(" • ")} ★`;
     svg += `
-      <!-- User-Selected Trust Badges -->
       <text x="${centerX.toFixed(2)}" y="${footerY.toFixed(2)}"
-            text-anchor="middle" font-family="${fontBody}" font-size="2.2" letter-spacing="0.8" fill="#756254">
+            text-anchor="middle" font-family="${fontBody}" font-size="${footerFontSize.toFixed(2)}" letter-spacing="0.9" fill="#756254">
         ${escapeXml(badgeText)}
       </text>
     `;
   } else {
-    // Elegant tailpiece flourish when no badges are selected
     svg += `
-      <g transform="translate(${centerX.toFixed(2)}, ${(footerY - 0.8).toFixed(2)})" fill="#8c7866" font-family="${fontBody}" font-size="2.4" text-anchor="middle">
+      <g transform="translate(${centerX.toFixed(2)}, ${(footerY - 0.8).toFixed(2)})" fill="#8c7866" font-family="${fontBody}" font-size="${(footerFontSize + 0.4).toFixed(2)}" text-anchor="middle">
         <text y="0">❦ ─── ✤ ─── ❦</text>
       </g>
     `;

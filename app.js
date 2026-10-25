@@ -411,30 +411,34 @@
     });
 
     // Sheet Layout (1 Packet vs 2 Packets)
-    elements.selectSheetLayout.addEventListener('change', (e) => {
+    const onLayoutChange = (e) => {
       state.sheetLayout = e.target.value;
       const isTwin = state.sheetLayout === 'twin';
-      // If twin layout, only classic and tuckslot are compatible (origami square is 1-per-sheet)
-      if (isTwin && state.foldingStyle === 'origami') {
+      // If twin layout, origami and petal are 1-per-sheet designs
+      if (isTwin && (state.foldingStyle === 'origami' || state.foldingStyle === 'petal')) {
         state.foldingStyle = 'classic';
         elements.selectFoldingStyle.value = 'classic';
       }
       updateFoldingStyleHint();
       updatePreviewModeTag();
       renderPreview();
-    });
+    };
+    elements.selectSheetLayout.addEventListener('change', onLayoutChange);
+    elements.selectSheetLayout.addEventListener('input', onLayoutChange);
 
     // Folding Style
-    elements.selectFoldingStyle.addEventListener('change', (e) => {
+    const onFoldingStyleChange = (e) => {
       state.foldingStyle = e.target.value;
-      if (state.foldingStyle === 'origami' && state.sheetLayout === 'twin') {
+      if ((state.foldingStyle === 'origami' || state.foldingStyle === 'petal') && state.sheetLayout === 'twin') {
         state.sheetLayout = 'single';
         elements.selectSheetLayout.value = 'single';
       }
       updateFoldingStyleHint();
       updatePreviewModeTag();
       renderPreview();
-    });
+    };
+    elements.selectFoldingStyle.addEventListener('change', onFoldingStyleChange);
+    elements.selectFoldingStyle.addEventListener('input', onFoldingStyleChange);
 
     // Paper Size
     elements.selectPaperSize.addEventListener('change', (e) => {
@@ -497,6 +501,9 @@
     if (state.foldingStyle === 'origami') {
       elements.foldingStyleHint.textContent = '★ 100% Glue-Free & Tapeless: Cut out square and fold into gardener\'s cup pouch.';
       elements.foldingStyleHint.style.color = '#2e5339';
+    } else if (state.foldingStyle === 'petal') {
+      elements.foldingStyleHint.textContent = '★ 100% Glue-Free: 4 curved flower petals fold into an interlocking pinwheel.';
+      elements.foldingStyleHint.style.color = '#8b3a2b';
     } else if (state.foldingStyle === 'tuckslot') {
       elements.foldingStyleHint.textContent = '✂ Interlocking Tuck-Slot: Slice the marked back slot for glue-free closure.';
       elements.foldingStyleHint.style.color = '#7d3c22';
@@ -510,6 +517,7 @@
     const layoutName = state.sheetLayout === 'twin' ? '2 Packets / Sheet' : '1 Packet / Sheet';
     let styleName = 'Classic Flap';
     if (state.foldingStyle === 'origami') styleName = 'Origami Pouch';
+    if (state.foldingStyle === 'petal') styleName = '4-Petal Flower';
     if (state.foldingStyle === 'tuckslot') styleName = 'Tuck-Slot';
 
     elements.previewModeTag.textContent = `(${layoutName} • ${styleName})`;
@@ -521,7 +529,38 @@
   function renderGuideModalSteps() {
     if (!elements.guideModalContent) return;
 
-    if (state.foldingStyle === 'origami') {
+    if (state.foldingStyle === 'petal') {
+      elements.guideModalContent.innerHTML = `
+        <div class="guide-step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <h4>Cut Along Curved Petals</h4>
+            <p>Cut along the solid outline to produce the four-petaled flower shape.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <h4>Fold Top &amp; Right Petals</h4>
+            <p>Fold the Top petal down over the center pocket. Fold the Right petal inward over the top petal.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <h4>Fold Bottom Petal</h4>
+            <p>Fold the Bottom petal upward over the right petal.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">4</div>
+          <div class="step-text">
+            <h4>Tuck Left Petal (Pinwheel Lock)</h4>
+            <p>Fold the Left petal inward over the bottom petal, and tuck its rounded tip underneath the Top petal. It forms a self-locking flower pinwheel with zero tape or glue!</p>
+          </div>
+        </div>
+      `;
+    } else if (state.foldingStyle === 'origami') {
       elements.guideModalContent.innerHTML = `
         <div class="guide-step">
           <div class="step-num">1</div>
@@ -632,7 +671,7 @@
     const paper = ENVELOPE_CONFIG.papers[state.paperSize] || ENVELOPE_CONFIG.papers.letter;
     const aspectRatio = paper.height / paper.width;
 
-    const baseWidthPx = 520;
+    const baseWidthPx = 620;
     const baseHeightPx = baseWidthPx * aspectRatio;
 
     elements.paperSheet.style.width = `${baseWidthPx}px`;
