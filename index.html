@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vintage Tapeless Seed Envelope Maker</title>
+  <title>Vintage Seed Envelope Maker</title>
   <link rel="stylesheet" href="style.css">
   <style id="dynamic-page-style">
     @page { size: letter portrait; margin: 0; }
@@ -20,8 +20,8 @@
         <path d="M30 45 C40 40 45 30 50 15 C55 30 60 40 70 45" stroke-width="4"/>
       </svg>
       <div class="brand-text">
-        <h1>Tapeless Seed Envelope Maker</h1>
-        <div class="brand-subtitle">Heirloom Catalog Template • Full 8.5×11 Sheet Fold • Zero Tape, Glue or Waste</div>
+        <h1>Heirloom Seed Envelope Maker</h1>
+        <div class="brand-subtitle">Authentic 19th-Century Seed Catalog Typography &amp; Folding Patterns • 8.5×11 &amp; A4</div>
       </div>
     </div>
     <div class="header-actions">
@@ -39,7 +39,7 @@
           <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
           <rect x="6" y="14" width="12" height="8"></rect>
         </svg>
-        Print Envelope
+        Print Sheet
       </button>
     </div>
   </header>
@@ -53,97 +53,170 @@
       <!-- Section: Botanical Information -->
       <section class="form-section">
         <h2 class="section-title">
-          <span>🌿</span> Seed Information
+          <span>🌿</span> Seed &amp; Plant Information
         </h2>
 
-        <!-- Plant / Seed Name -->
+        <!-- Plant / Seed Name with Datalist & Botanical Lookup -->
         <div class="form-group">
           <label for="input-seed-name" class="form-label">
             Seed / Plant Name <span class="required">*</span>
           </label>
-          <input type="text" id="input-seed-name" class="input-text" placeholder="e.g. Sunflower, Tomato, Sweet Basil" value="Sunflower" required>
-          <div class="form-hint">Display name across top banner (auto-scales to fit without clipping).</div>
+          <input type="text" id="input-seed-name" class="input-text"
+                 placeholder="Type plant name (e.g. Zinnia, Tomato, Basil...)"
+                 value="Zinnia" list="plant-suggestions" autocomplete="off" required>
+          <datalist id="plant-suggestions">
+            <!-- Populated via botany.js -->
+          </datalist>
+
+          <!-- Botanical Lookup Notification Pill -->
+          <div id="lookup-badge" class="lookup-badge" style="display: none;">
+            <!-- Populated dynamically when matching botany is found -->
+          </div>
+          <div class="form-hint">Type a common name or typo (e.g. "Zinna") to auto-populate botanical Latin name.</div>
         </div>
 
         <!-- Latin Binomial Name -->
         <div class="form-group">
           <label for="input-latin-name" class="form-label">
-            Latin Name <span class="form-hint">(Botanical Binomial)</span>
+            Botanical Latin Name <span class="form-hint">(Scientific Binomial)</span>
           </label>
-          <input type="text" id="input-latin-name" class="input-text" placeholder="e.g. Helianthus annuus" value="Helianthus annuus">
-          <div class="form-hint">Capitalizes genus and lowercases species on blur. Keeps "var." / "subsp." / "cv."</div>
+          <input type="text" id="input-latin-name" class="input-text" placeholder="e.g. Zinnia elegans" value="Zinnia elegans">
+          <div class="form-hint">Auto-formats on blur (capitalizes Genus, italicizes in print).</div>
         </div>
 
         <!-- Cultivar / Variety -->
         <div class="form-group">
           <label for="input-variety" class="form-label">Cultivar / Variety</label>
-          <input type="text" id="input-variety" class="input-text" placeholder="e.g. Mammoth Russian, Brandywine" value="Mammoth Russian">
+          <input type="text" id="input-variety" class="input-text" placeholder="e.g. California Giant, Brandywine" value="California Giant">
         </div>
 
-        <!-- Harvest Date & Time -->
-        <div class="row-two-col">
-          <div class="form-group">
-            <label for="input-date" class="form-label">Date Harvested</label>
-            <input type="date" id="input-date" class="input-text">
-          </div>
-          <div class="form-group">
-            <label for="input-time" class="form-label">Time <span class="form-hint">(optional)</span></label>
-            <input type="time" id="input-time" class="input-text">
+        <!-- Packaged Date (Month and Year, no time) -->
+        <div class="form-group">
+          <label class="form-label">Packaged Date</label>
+          <div class="date-controls-row">
+            <select id="select-date-prefix" class="select-input date-prefix-select">
+              <option value="PACKAGED" selected>PACKAGED</option>
+              <option value="HARVESTED">HARVESTED</option>
+              <option value="SAVED">SAVED</option>
+            </select>
+            <select id="select-month" class="select-input date-month-select">
+              <option value="January">January</option>
+              <option value="February">February</option>
+              <option value="March">March</option>
+              <option value="April">April</option>
+              <option value="May">May</option>
+              <option value="June">June</option>
+              <option value="July">July</option>
+              <option value="August">August</option>
+              <option value="September">September</option>
+              <option value="October" selected>October</option>
+              <option value="November">November</option>
+              <option value="December">December</option>
+            </select>
+            <input type="text" id="input-year" class="input-text date-year-input" placeholder="Year" value="2026" maxlength="4">
           </div>
         </div>
 
         <!-- Extra Notes -->
         <div class="form-group">
-          <label for="input-notes" class="form-label">Extra Notes <span class="form-hint">(1-2 lines)</span></label>
-          <textarea id="input-notes" class="textarea-input" rows="2" placeholder="e.g. Garden Bed #2, 2026 crop, open-pollinated, 75 seeds">Giant golden heads up to 14 inches across. Birds and pollinators adore.</textarea>
+          <label for="input-notes" class="form-label">Garden &amp; Sowing Notes <span class="form-hint">(1–2 lines)</span></label>
+          <textarea id="input-notes" class="textarea-input" rows="2" placeholder="e.g. Full sun, sow after last frost, loves warm soil">Vibrant warm-season cut flower. Attracts butterflies. Sow in full sun.</textarea>
         </div>
-      </section>
 
-      <!-- Section: Botanical Clip Art -->
-      <section class="form-section">
-        <h2 class="section-title">
-          <span>🎨</span> Vintage Botanical Art
-        </h2>
+        <!-- Optional Trust Badges (Item 6: Toggles, none hardcoded) -->
         <div class="form-group">
-          <label class="form-label">Select Woodcut Illustration</label>
-          <div id="clip-art-grid" class="clip-art-grid">
-            <!-- Populated via JS from manifest -->
+          <label class="form-label">Packet Badges &amp; Trust Marks <span class="form-hint">(optional)</span></label>
+          <div class="badges-grid">
+            <label class="badge-checkbox-label">
+              <input type="checkbox" id="badge-open-pollinated">
+              <span>Open Pollinated</span>
+            </label>
+            <label class="badge-checkbox-label">
+              <input type="checkbox" id="badge-tested-germination">
+              <span>Tested Germination</span>
+            </label>
+            <label class="badge-checkbox-label">
+              <input type="checkbox" id="badge-heirloom">
+              <span>Heirloom Variety</span>
+            </label>
+            <label class="badge-checkbox-label">
+              <input type="checkbox" id="badge-organic">
+              <span>Certified Organic</span>
+            </label>
           </div>
-          <div class="form-hint">Selecting art auto-fills plant and botanical names.</div>
         </div>
       </section>
 
-      <!-- Section: Typography & Styling -->
+      <!-- Section: Artwork & Picture Upload -->
       <section class="form-section">
         <h2 class="section-title">
-          <span>🔤</span> Typography
+          <span>🎨</span> Artwork &amp; Illustrations
         </h2>
+
+        <!-- Custom Picture Upload -->
         <div class="form-group">
-          <label for="select-font" class="form-label">Plant Name Display Face</label>
-          <select id="select-font" class="select-input">
-            <option value="'Abril Fatface', serif" selected>Abril Fatface (19th-Century Didone)</option>
-            <option value="'Rye', serif">Rye (Victorian Western Wood Type)</option>
-            <option value="'IM Fell English', serif">IM Fell English (17th-Century Letterpress)</option>
-            <option value="'Libre Caslon Text', serif">Libre Caslon (Classic Catalog Serif)</option>
-          </select>
+          <label class="form-label">Upload Custom Picture / Photo</label>
+          <div class="custom-upload-zone">
+            <input type="file" id="input-custom-image" accept="image/*" class="file-input-hidden">
+            <label for="input-custom-image" class="btn btn-outline upload-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+              Choose Image (PNG, JPG, SVG)
+            </label>
+
+            <!-- Uploaded Image Status & Options -->
+            <div id="uploaded-image-info" class="uploaded-image-info" style="display: none;">
+              <span id="uploaded-image-name" class="uploaded-image-name">image.png</span>
+              <div class="image-filter-control">
+                <select id="select-image-filter" class="select-input select-small">
+                  <option value="monochrome" selected>Filter: Vintage Engraving (B&amp;W)</option>
+                  <option value="color">Filter: Original Color</option>
+                </select>
+              </div>
+              <button type="button" id="btn-remove-image" class="btn-remove-link" title="Remove custom image">&times; Remove</button>
+            </div>
+          </div>
+          <div class="form-hint">Upload your own photo or garden illustration to place inside the packet frame.</div>
+        </div>
+
+        <!-- Or Preset Woodcut Illustrations -->
+        <div class="form-group" id="clip-art-section">
+          <label class="form-label">Or Select Botanical Vignette</label>
+          <div id="clip-art-grid" class="clip-art-grid">
+            <!-- Populated via JS from manifest (defaulting to Universal Sprig) -->
+          </div>
         </div>
       </section>
 
-      <!-- Section: Envelope Format & Geometry -->
+      <!-- Section: Sheet Layout & Folding Scheme -->
       <section class="form-section">
         <h2 class="section-title">
-          <span>📐</span> Envelope Format &amp; Paper
+          <span>📐</span> Sheet Layout &amp; Folding
         </h2>
 
-        <!-- Template Style: Full Sheet (No-Cut) vs Cutout Net -->
+        <!-- 1 Packet vs 2 Packets per Sheet -->
         <div class="form-group">
-          <label for="select-template-style" class="form-label">Template Style</label>
-          <select id="select-template-style" class="select-input">
-            <option value="fullsheet" selected>Full Sheet (No-Cut / 100% Folded) ★ Recommended</option>
-            <option value="cutout">Cutout Net (Scissors Required)</option>
+          <label for="select-sheet-layout" class="form-label">Sheet Layout</label>
+          <select id="select-sheet-layout" class="select-input">
+            <option value="single" selected>1 Packet per Sheet (Large 3.3×4.8 in + Stake Label)</option>
+            <option value="twin">2 Packets per Sheet (Standard 2.7×3.85 in Twin Packets)</option>
           </select>
-          <div id="template-style-hint" class="form-hint" style="color: #2e5339; font-weight: 500;">
-            ✓ Uses the entire 8.5×11 sheet. Zero cutting required—just fold along dashed lines!
+          <div class="form-hint">Twin packets print two complete seed envelopes on a single 8.5×11 sheet!</div>
+        </div>
+
+        <!-- Folding Pattern Options -->
+        <div class="form-group">
+          <label for="select-folding-style" class="form-label">Folding Pattern</label>
+          <select id="select-folding-style" class="select-input">
+            <option value="classic" selected>Classic Heirloom Flap (Glue stick / tape seal)</option>
+            <option value="origami">Gardener's Diamond Pouch (100% Glue-Free &amp; Tapeless)</option>
+            <option value="tuckslot">Interlocking Tuck-Slot (Cutout with back slit)</option>
+          </select>
+          <div id="folding-style-hint" class="form-hint" style="color: #4a3d33; font-weight: 500;">
+            ✂ Classic Flap: Clean perimeter cut; side flaps fold behind and secure with glue stick or tape.
           </div>
         </div>
 
@@ -155,31 +228,20 @@
               <option value="a4">A4 (210 × 297 mm)</option>
             </select>
           </div>
-          <div class="form-group" id="group-finished-size" style="display: none;">
-            <label for="select-envelope-size" class="form-label">Finished Size</label>
-            <select id="select-envelope-size" class="select-input">
-              <option value="small">Small (64 × 90 mm)</option>
-              <option value="medium" selected>Medium (74 × 105 mm)</option>
-              <option value="large">Large (84 × 120 mm)</option>
-              <option value="fullpage">Page-Max (100 × 135 mm)</option>
+          <div class="form-group">
+            <label for="select-font" class="form-label">Title Typography</label>
+            <select id="select-font" class="select-input">
+              <option value="'Abril Fatface', serif" selected>Abril Fatface (19th-C. Didone)</option>
+              <option value="'Rye', serif">Rye (Western Wood Type)</option>
+              <option value="'IM Fell English', serif">IM Fell English (Letterpress)</option>
+              <option value="'Libre Caslon Text', serif">Libre Caslon (Classic Serif)</option>
             </select>
           </div>
         </div>
 
         <div class="form-group">
-          <label for="select-print-mode" class="form-label">Print Mode</label>
-          <select id="select-print-mode" class="select-input">
-            <option value="onesided" selected>One-sided (Default - folds outward)</option>
-            <option value="duplex">Two-sided (Duplex - front art, inside creases)</option>
-          </select>
-          <div id="duplex-note" class="duplex-notice-bar" style="display: none;">
-            <strong>Duplex Notice:</strong> Page 1 is outside art; Page 2 has mirrored fold lines. In printer settings, choose <em>Flip on Long Edge</em> and <em>100% / Actual Size</em>.
-          </div>
-        </div>
-
-        <div class="form-group">
           <div class="toggle-wrapper">
-            <label for="toggle-fold-lines" class="form-label" style="margin-bottom:0;">Show Fold Lines in Preview</label>
+            <label for="toggle-fold-lines" class="form-label" style="margin-bottom:0;">Show Dashed Fold Lines</label>
             <label class="toggle-switch">
               <input type="checkbox" id="toggle-fold-lines" checked>
               <span class="toggle-slider"></span>
@@ -196,13 +258,7 @@
       <div class="preview-toolbar">
         <div class="toolbar-group">
           <span style="font-weight: 600;">Print Sheet Preview</span>
-          <span id="preview-mode-tag" style="color: #c4b5a3; font-style: italic;">(Full 8.5×11 Sheet • No-Cut)</span>
-        </div>
-
-        <!-- Page switcher tabs (for two-sided mode) -->
-        <div id="duplex-tabs" class="toolbar-group" style="display: none;">
-          <button id="tab-page-1" class="preview-tab-btn active">Page 1 (Outside Art)</button>
-          <button id="tab-page-2" class="preview-tab-btn">Page 2 (Inside Net)</button>
+          <span id="preview-mode-tag" style="color: #c4b5a3; font-style: italic;">(1 Packet / Sheet • Classic Flap)</span>
         </div>
 
         <!-- Zoom controls -->
@@ -233,41 +289,13 @@
   <div id="guide-modal" class="modal-overlay">
     <div class="modal-content">
       <button id="modal-close-btn" class="modal-close">&times;</button>
-      <h2 style="font-family: 'Rye', serif; margin-bottom: 6px; color: #382c23;">How to Fold Your Tapeless Envelope</h2>
+      <h2 style="font-family: 'Rye', serif; margin-bottom: 6px; color: #382c23;">How to Fold Your Envelope</h2>
       <p style="color: #6e6053; font-style: italic; margin-bottom: 20px;">
-        Designed to fold and lock together securely with zero glue, tape, or scissors required!
+        Follow these steps for crisp, secure heirloom seed packets.
       </p>
 
-      <div class="guide-step">
-        <div class="step-num">1</div>
-        <div class="step-text">
-          <h4>Fold Side Flaps Inward</h4>
-          <p>Lay sheet printed-side down (or face up). Fold the left and right side flaps inward along the dashed vertical lines.</p>
-        </div>
-      </div>
-
-      <div class="guide-step">
-        <div class="step-num">2</div>
-        <div class="step-text">
-          <h4>Fold Top Corners (Tongue)</h4>
-          <p>Fold the top two corners inward along the 45° diagonal dashed lines to form a tapered triangular closure tongue.</p>
-        </div>
-      </div>
-
-      <div class="guide-step">
-        <div class="step-num">3</div>
-        <div class="step-text">
-          <h4>Fold Bottom Up to Form Pocket</h4>
-          <p>Fold the entire bottom flap up along the dashed horizontal crease. This forms a deep, secure seed pocket with solid fold seams along the sides and bottom. Drop your seeds inside!</p>
-        </div>
-      </div>
-
-      <div class="guide-step">
-        <div class="step-num">4</div>
-        <div class="step-text">
-          <h4>Fold Top Down &amp; Tuck In</h4>
-          <p>Fold the top flap down along the horizontal crease and tuck the triangular tongue firmly into the bottom pocket. Your seeds are completely sealed!</p>
-        </div>
+      <div id="guide-modal-steps">
+        <!-- Injected dynamically based on folding style -->
       </div>
 
       <div style="margin-top: 24px; text-align: right;">
@@ -277,6 +305,7 @@
   </div>
 
   <!-- Scripts -->
+  <script src="botany.js"></script>
   <script src="clipart.js"></script>
   <script src="geometry.js"></script>
   <script src="app.js"></script>

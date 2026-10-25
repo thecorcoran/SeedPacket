@@ -1,60 +1,92 @@
 /**
- * Tapeless Seed Envelope Maker - Application Controller
+ * Tapeless & Cutout Seed Envelope Maker - Application Controller
  */
 
 (function () {
   'use strict';
 
+  // Months array
+  const MONTHS = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
   // Application State
   const state = {
-    seedName: "Sunflower",
-    latinName: "Helianthus annuus",
-    variety: "Mammoth Russian",
-    dateHarvested: "",
-    timeHarvested: "",
-    notes: "Giant golden heads up to 14 inches across. Birds and pollinators adore.",
-    clipArtId: "sunflower",
+    seedName: "Zinnia",
+    latinName: "Zinnia elegans",
+    variety: "California Giant",
+    packagedMonth: "October",
+    packagedYear: "2026",
+    datePrefix: "PACKAGED", // "PACKAGED" or "HARVESTED"
+    notes: "Vibrant warm-season cut flower. Attracts butterflies. Sow in full sun.",
+    clipArtId: "universal",
+    customImage: null, // data URL string
+    imageFilter: "monochrome", // 'monochrome' or 'color'
     fontFamily: "'Abril Fatface', serif",
-    templateStyle: "fullsheet", // 'fullsheet' (No-Cut, 100% paper utilized) or 'cutout'
+    sheetLayout: "single", // 'single' (1 packet) or 'twin' (2 packets)
+    foldingStyle: "classic", // 'classic', 'origami', 'tuckslot'
     paperSize: "letter",
-    envelopeSize: "medium",
-    printMode: "onesided",
     showFoldLines: true,
-    activeDuplexPage: 1, // 1 or 2
+    badgeOpenPollinated: false,
+    badgeTestedGermination: false,
+    badgeHeirloom: false,
+    badgeOrganic: false,
     zoom: 'fit'
   };
 
   // DOM Elements
   const elements = {
     inputSeedName: document.getElementById('input-seed-name'),
+    plantSuggestions: document.getElementById('plant-suggestions'),
+    lookupBadge: document.getElementById('lookup-badge'),
+    btnApplyLookup: document.getElementById('btn-apply-lookup'),
     inputLatinName: document.getElementById('input-latin-name'),
     inputVariety: document.getElementById('input-variety'),
-    inputDate: document.getElementById('input-date'),
-    inputTime: document.getElementById('input-time'),
+    selectDatePrefix: document.getElementById('select-date-prefix'),
+    selectMonth: document.getElementById('select-month'),
+    inputYear: document.getElementById('input-year'),
     inputNotes: document.getElementById('input-notes'),
+
+    // Badges
+    checkOpenPollinated: document.getElementById('badge-open-pollinated'),
+    checkTestedGermination: document.getElementById('badge-tested-germination'),
+    checkHeirloom: document.getElementById('badge-heirloom'),
+    checkOrganic: document.getElementById('badge-organic'),
+
+    // Artwork
+    inputCustomImage: document.getElementById('input-custom-image'),
+    uploadedImageInfo: document.getElementById('uploaded-image-info'),
+    uploadedImageName: document.getElementById('uploaded-image-name'),
+    btnRemoveImage: document.getElementById('btn-remove-image'),
+    selectImageFilter: document.getElementById('select-image-filter'),
     clipArtGrid: document.getElementById('clip-art-grid'),
-    selectFont: document.getElementById('select-font'),
-    selectTemplateStyle: document.getElementById('select-template-style'),
-    templateStyleHint: document.getElementById('template-style-hint'),
-    groupFinishedSize: document.getElementById('group-finished-size'),
+    clipArtSection: document.getElementById('clip-art-section'),
+
+    // Layout & Sizing
+    selectSheetLayout: document.getElementById('select-sheet-layout'),
+    selectFoldingStyle: document.getElementById('select-folding-style'),
+    foldingStyleHint: document.getElementById('folding-style-hint'),
     selectPaperSize: document.getElementById('select-paper-size'),
-    selectEnvelopeSize: document.getElementById('select-envelope-size'),
-    selectPrintMode: document.getElementById('select-print-mode'),
+    selectFont: document.getElementById('select-font'),
     toggleFoldLines: document.getElementById('toggle-fold-lines'),
-    duplexNote: document.getElementById('duplex-note'),
-    duplexTabs: document.getElementById('duplex-tabs'),
-    tabPage1: document.getElementById('tab-page-1'),
-    tabPage2: document.getElementById('tab-page-2'),
+
+    // Preview & Printing
     previewModeTag: document.getElementById('preview-mode-tag'),
     paperSheet: document.getElementById('paper-sheet'),
     previewStage: document.getElementById('preview-stage'),
     printRoot: document.getElementById('print-root'),
     dynamicPageStyle: document.getElementById('dynamic-page-style'),
     btnPrint: document.getElementById('btn-print'),
+
+    // Guide Modal
     btnGuide: document.getElementById('btn-guide'),
     guideModal: document.getElementById('guide-modal'),
     modalCloseBtn: document.getElementById('modal-close-btn'),
     btnGuideGotIt: document.getElementById('btn-guide-got-it'),
+    guideModalContent: document.getElementById('guide-modal-steps'),
+
+    // Zoom
     btnZoomIn: document.getElementById('btn-zoom-in'),
     btnZoomOut: document.getElementById('btn-zoom-out'),
     btnZoomReset: document.getElementById('btn-zoom-reset'),
@@ -65,15 +97,20 @@
    * Initializes the application.
    */
   function init() {
-    // Set default harvest date to today's local date
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    state.dateHarvested = `${yyyy}-${mm}-${dd}`;
-    if (elements.inputDate) {
-      elements.inputDate.value = state.dateHarvested;
+    // Set default month & year to current
+    const now = new Date();
+    state.packagedMonth = MONTHS[now.getMonth()];
+    state.packagedYear = String(now.getFullYear());
+
+    if (elements.selectMonth) {
+      elements.selectMonth.value = state.packagedMonth;
     }
+    if (elements.inputYear) {
+      elements.inputYear.value = state.packagedYear;
+    }
+
+    // Populate datalist with botanical suggestions
+    populatePlantSuggestions();
 
     // Populate clip art thumbnail selector
     renderClipArtGrid();
@@ -91,6 +128,21 @@
       if (state.zoom === 'fit') {
         updateZoom();
       }
+    });
+  }
+
+  /**
+   * Populates the HTML <datalist> for plant name autocomplete.
+   */
+  function populatePlantSuggestions() {
+    if (!elements.plantSuggestions || typeof BOTANICAL_DATABASE === 'undefined') return;
+    elements.plantSuggestions.innerHTML = '';
+
+    BOTANICAL_DATABASE.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.common;
+      opt.label = `${item.latin} (${item.family})`;
+      elements.plantSuggestions.appendChild(opt);
     });
   }
 
@@ -127,6 +179,56 @@
   }
 
   /**
+   * Checks the botanical database when the user types a plant name.
+   */
+  function checkBotanicalLookup(query) {
+    if (typeof searchBotanicalDatabase === 'undefined') return;
+    const match = searchBotanicalDatabase(query);
+
+    if (match) {
+      elements.lookupBadge.style.display = 'flex';
+      elements.lookupBadge.innerHTML = `
+        <span>Found botanical match: <strong>${match.latin}</strong> (${match.common})</span>
+        <button type="button" id="btn-quick-fill-botany" class="btn-lookup-pill">Auto-Fill</button>
+      `;
+      const btn = document.getElementById('btn-quick-fill-botany');
+      if (btn) {
+        btn.addEventListener('click', () => applyBotanicalMatch(match));
+      }
+
+      // If exact common name match, auto-fill Latin name if Latin name is currently empty or matches previous botanical
+      if (query.trim().toLowerCase() === match.common.toLowerCase() ||
+          (match.synonyms && match.synonyms.includes(query.trim().toLowerCase()))) {
+        applyBotanicalMatch(match);
+      }
+    } else {
+      elements.lookupBadge.style.display = 'none';
+    }
+  }
+
+  /**
+   * Applies matched botanical data to state and inputs.
+   */
+  function applyBotanicalMatch(match) {
+    if (!match) return;
+    state.latinName = match.latin;
+    elements.inputLatinName.value = match.latin;
+
+    if (!elements.inputVariety.value || elements.inputVariety.value === "California Giant") {
+      state.variety = match.variety || "";
+      elements.inputVariety.value = state.variety;
+    }
+
+    if (!elements.inputNotes.value || elements.inputNotes.value.includes("Vibrant warm-season")) {
+      state.notes = match.notes || "";
+      elements.inputNotes.value = state.notes;
+    }
+
+    elements.lookupBadge.style.display = 'none';
+    renderPreview();
+  }
+
+  /**
    * Populates the thumbnail grid for clip art.
    */
   function renderClipArtGrid() {
@@ -145,12 +247,12 @@
       if (art.svg) {
         thumb.innerHTML = `<svg viewBox="0 0 100 100" fill="none" stroke="#382c23">${art.svg}</svg>`;
       } else {
-        thumb.innerHTML = `<span style="font-size: 1.4rem; color: #8c7866;">∅</span>`;
+        thumb.innerHTML = `<span style="font-size: 1.2rem; color: #8c7866;">∅</span>`;
       }
 
       const label = document.createElement('div');
       label.className = 'clip-label';
-      label.textContent = art.name;
+      label.textContent = art.name.split('(')[0].trim();
 
       item.appendChild(thumb);
       item.appendChild(label);
@@ -164,10 +266,11 @@
   }
 
   /**
-   * Handles clip art selection and metadata autofill.
+   * Handles clip art selection.
    */
   function selectClipArt(art) {
     state.clipArtId = art.id;
+    state.customImage = null; // Clear uploaded image when selecting preset
 
     // Update active class in grid
     const allItems = elements.clipArtGrid.querySelectorAll('.clip-item');
@@ -175,24 +278,8 @@
       el.classList.toggle('active', el.dataset.id === art.id);
     });
 
-    // Auto-fill form fields if art provides them
-    if (art.id !== "none") {
-      if (art.commonName) {
-        state.seedName = art.commonName;
-        elements.inputSeedName.value = art.commonName;
-      }
-      if (art.latinName) {
-        state.latinName = art.latinName;
-        elements.inputLatinName.value = art.latinName;
-      }
-      if (art.variety) {
-        state.variety = art.variety;
-        elements.inputVariety.value = art.variety;
-      }
-      if (art.notes) {
-        state.notes = art.notes;
-        elements.inputNotes.value = art.notes;
-      }
+    if (elements.uploadedImageInfo) {
+      elements.uploadedImageInfo.style.display = 'none';
     }
 
     renderPreview();
@@ -210,12 +297,18 @@
    * Binds UI event listeners.
    */
   function bindEvents() {
-    // Form Inputs
+    // Seed Name Input with Botanical Lookup
     elements.inputSeedName.addEventListener('input', (e) => {
       state.seedName = e.target.value;
+      checkBotanicalLookup(e.target.value);
       renderPreview();
     });
 
+    elements.inputSeedName.addEventListener('change', (e) => {
+      checkBotanicalLookup(e.target.value);
+    });
+
+    // Latin Name
     elements.inputLatinName.addEventListener('input', (e) => {
       state.latinName = e.target.value;
       renderPreview();
@@ -228,23 +321,86 @@
       renderPreview();
     });
 
+    // Variety
     elements.inputVariety.addEventListener('input', (e) => {
       state.variety = e.target.value;
       renderPreview();
     });
 
-    elements.inputDate.addEventListener('change', (e) => {
-      state.dateHarvested = e.target.value;
+    // Packaged Date (Month and Year, no time)
+    elements.selectDatePrefix.addEventListener('change', (e) => {
+      state.datePrefix = e.target.value;
       renderPreview();
     });
 
-    elements.inputTime.addEventListener('change', (e) => {
-      state.timeHarvested = e.target.value;
+    elements.selectMonth.addEventListener('change', (e) => {
+      state.packagedMonth = e.target.value;
       renderPreview();
     });
 
+    elements.inputYear.addEventListener('input', (e) => {
+      state.packagedYear = e.target.value;
+      renderPreview();
+    });
+
+    // Notes
     elements.inputNotes.addEventListener('input', (e) => {
       state.notes = e.target.value;
+      renderPreview();
+    });
+
+    // Badges Checkboxes
+    elements.checkOpenPollinated.addEventListener('change', (e) => {
+      state.badgeOpenPollinated = e.target.checked;
+      renderPreview();
+    });
+
+    elements.checkTestedGermination.addEventListener('change', (e) => {
+      state.badgeTestedGermination = e.target.checked;
+      renderPreview();
+    });
+
+    elements.checkHeirloom.addEventListener('change', (e) => {
+      state.badgeHeirloom = e.target.checked;
+      renderPreview();
+    });
+
+    elements.checkOrganic.addEventListener('change', (e) => {
+      state.badgeOrganic = e.target.checked;
+      renderPreview();
+    });
+
+    // Custom Image Upload
+    elements.inputCustomImage.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (uploadEvent) => {
+          state.customImage = uploadEvent.target.result;
+          elements.uploadedImageInfo.style.display = 'flex';
+          elements.uploadedImageName.textContent = file.name;
+
+          // Clear clip art active item
+          const allItems = elements.clipArtGrid.querySelectorAll('.clip-item');
+          allItems.forEach(el => el.classList.remove('active'));
+
+          renderPreview();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    elements.btnRemoveImage.addEventListener('click', () => {
+      state.customImage = null;
+      elements.inputCustomImage.value = '';
+      elements.uploadedImageInfo.style.display = 'none';
+      state.clipArtId = "universal";
+      renderClipArtGrid();
+      renderPreview();
+    });
+
+    elements.selectImageFilter.addEventListener('change', (e) => {
+      state.imageFilter = e.target.value;
       renderPreview();
     });
 
@@ -254,58 +410,38 @@
       renderPreview();
     });
 
-    // Template Style (Full Sheet No-Cut vs Cutout Net)
-    elements.selectTemplateStyle.addEventListener('change', (e) => {
-      state.templateStyle = e.target.value;
-      const isFullSheet = state.templateStyle === 'fullsheet';
-      elements.groupFinishedSize.style.display = isFullSheet ? 'none' : 'block';
-      elements.templateStyleHint.textContent = isFullSheet
-        ? '✓ Uses the entire 8.5×11 sheet. Zero cutting required—just fold along dashed lines!'
-        : '✂ Cut around solid perimeter with scissors, then fold along dashed lines.';
-      elements.templateStyleHint.style.color = isFullSheet ? '#2e5339' : '#8b3a2b';
-
+    // Sheet Layout (1 Packet vs 2 Packets)
+    elements.selectSheetLayout.addEventListener('change', (e) => {
+      state.sheetLayout = e.target.value;
+      const isTwin = state.sheetLayout === 'twin';
+      // If twin layout, only classic and tuckslot are compatible (origami square is 1-per-sheet)
+      if (isTwin && state.foldingStyle === 'origami') {
+        state.foldingStyle = 'classic';
+        elements.selectFoldingStyle.value = 'classic';
+      }
+      updateFoldingStyleHint();
       updatePreviewModeTag();
       renderPreview();
     });
 
-    // Paper & Envelope Sizes
+    // Folding Style
+    elements.selectFoldingStyle.addEventListener('change', (e) => {
+      state.foldingStyle = e.target.value;
+      if (state.foldingStyle === 'origami' && state.sheetLayout === 'twin') {
+        state.sheetLayout = 'single';
+        elements.selectSheetLayout.value = 'single';
+      }
+      updateFoldingStyleHint();
+      updatePreviewModeTag();
+      renderPreview();
+    });
+
+    // Paper Size
     elements.selectPaperSize.addEventListener('change', (e) => {
       state.paperSize = e.target.value;
       updatePageStyle();
       renderPreview();
       updateZoom();
-    });
-
-    elements.selectEnvelopeSize.addEventListener('change', (e) => {
-      state.envelopeSize = e.target.value;
-      renderPreview();
-    });
-
-    // Print Mode
-    elements.selectPrintMode.addEventListener('change', (e) => {
-      state.printMode = e.target.value;
-      const isDuplex = state.printMode === 'duplex';
-      elements.duplexNote.style.display = isDuplex ? 'block' : 'none';
-      elements.duplexTabs.style.display = isDuplex ? 'flex' : 'none';
-      updatePreviewModeTag();
-      renderPreview();
-    });
-
-    // Duplex Preview Page Switcher
-    elements.tabPage1.addEventListener('click', () => {
-      state.activeDuplexPage = 1;
-      elements.tabPage1.classList.add('active');
-      elements.tabPage2.classList.remove('active');
-      updatePreviewModeTag();
-      renderPreview();
-    });
-
-    elements.tabPage2.addEventListener('click', () => {
-      state.activeDuplexPage = 2;
-      elements.tabPage2.classList.add('active');
-      elements.tabPage1.classList.remove('active');
-      updatePreviewModeTag();
-      renderPreview();
     });
 
     // Toggle Fold Lines
@@ -322,6 +458,7 @@
 
     // Folding Guide Modal
     elements.btnGuide.addEventListener('click', () => {
+      renderGuideModalSteps();
       elements.guideModal.classList.add('open');
     });
 
@@ -356,169 +493,135 @@
     });
   }
 
-  function updatePreviewModeTag() {
-    const isDuplex = state.printMode === 'duplex';
-    const isFullSheet = state.templateStyle === 'fullsheet';
-    const styleName = isFullSheet ? 'Full 8.5×11 Sheet • No-Cut' : 'Cutout Net';
-
-    if (isDuplex) {
-      elements.previewModeTag.textContent = `(${styleName} • Duplex Page ${state.activeDuplexPage})`;
+  function updateFoldingStyleHint() {
+    if (state.foldingStyle === 'origami') {
+      elements.foldingStyleHint.textContent = '★ 100% Glue-Free & Tapeless: Cut out square and fold into gardener\'s cup pouch.';
+      elements.foldingStyleHint.style.color = '#2e5339';
+    } else if (state.foldingStyle === 'tuckslot') {
+      elements.foldingStyleHint.textContent = '✂ Interlocking Tuck-Slot: Slice the marked back slot for glue-free closure.';
+      elements.foldingStyleHint.style.color = '#7d3c22';
     } else {
-      elements.previewModeTag.textContent = `(${styleName} • Single Sheet)`;
+      elements.foldingStyleHint.textContent = '✂ Classic Flap: Clean perimeter cut; side flaps fold behind and secure with glue stick or tape.';
+      elements.foldingStyleHint.style.color = '#4a3d33';
     }
   }
 
+  function updatePreviewModeTag() {
+    const layoutName = state.sheetLayout === 'twin' ? '2 Packets / Sheet' : '1 Packet / Sheet';
+    let styleName = 'Classic Flap';
+    if (state.foldingStyle === 'origami') styleName = 'Origami Pouch';
+    if (state.foldingStyle === 'tuckslot') styleName = 'Tuck-Slot';
+
+    elements.previewModeTag.textContent = `(${layoutName} • ${styleName})`;
+  }
+
   /**
-   * Generates the SVG string for a given sheet page.
-   * pageType: 'onesided' | 'duplex-1' | 'duplex-2'
+   * Dynamically populates the Folding Guide Modal depending on active style.
    */
-  function generateSheetSVG(pageType) {
-    const metrics = calculateEnvelopeMetrics(state.templateStyle, state.envelopeSize, state.paperSize);
-    const { paper, isFullSheet } = metrics;
-    const foldLines = generateFoldLines(metrics);
+  function renderGuideModalSteps() {
+    if (!elements.guideModalContent) return;
 
-    let contentSvg = '';
-
-    if (isFullSheet) {
-      // =========================================================================
-      // FULL SHEET NO-CUT TEMPLATE (100% of 8.5x11 page utilized, zero cutting)
-      // =========================================================================
-
-      // Background paper frame
-      contentSvg += `
-        <rect x="0" y="0" width="${paper.width}" height="${paper.height}" fill="#ffffff" stroke="none" />
+    if (state.foldingStyle === 'origami') {
+      elements.guideModalContent.innerHTML = `
+        <div class="guide-step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <h4>Cut Out Square</h4>
+            <p>Cut along the solid square perimeter with scissors. Fold diagonally in half corner-to-corner to form a large downward triangle (printed art faces forward).</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <h4>Fold Left Corner Across</h4>
+            <p>Take the left corner tip and fold it horizontally across to the right edge. Crease firmly.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <h4>Fold Right Corner Across</h4>
+            <p>Take the right corner tip and fold it horizontally across to the left edge, overlapping the previous fold. This forms an interlocking front pocket band.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">4</div>
+          <div class="step-text">
+            <h4>Insert Seeds &amp; Tuck In</h4>
+            <p>Drop your seeds inside the cup. Fold the top triangular flap down and tuck it securely into the front pocket band. It is 100% leak-proof with no tape or glue!</p>
+          </div>
+        </div>
       `;
-
-      if (pageType === 'onesided' || pageType === 'duplex-1') {
-        // Front Artwork centered in its panel
-        contentSvg += renderFrontPanelArtwork(state, metrics);
-
-        // Outside decorations on flaps (Garden notes on back flap, seal on top flap)
-        contentSvg += renderFullSheetOutsideDecorations(state, metrics);
-
-        // Dashed Fold Lines
-        if (state.showFoldLines) {
-          foldLines.forEach(line => {
-            contentSvg += `
-              <line x1="${line.x1.toFixed(2)}" y1="${line.y1.toFixed(2)}" x2="${line.x2.toFixed(2)}" y2="${line.y2.toFixed(2)}"
-                    stroke="#a6998d" stroke-width="0.30" stroke-dasharray="3 2" />
-            `;
-          });
-        }
-
-        // Margin Instructions
-        contentSvg += `
-          <text x="${(paper.width / 2).toFixed(2)}" y="${(paper.height - 4).toFixed(2)}"
-                text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.6" fill="#8c7866">
-            NO CUTTING REQUIRED • FOLD ENTIRE 8.5 × 11 SHEET ALONG DASHED LINES
-          </text>
-        `;
-      } else if (pageType === 'duplex-2') {
-        // Duplex Page 2 (Inside of sheet with folding creases & guidance)
-        contentSvg += `
-          <!-- Inside Folding Guidelines -->
-          <g class="inside-creases">
-        `;
-        foldLines.forEach(line => {
-          const mx1 = paper.width - line.x1;
-          const mx2 = paper.width - line.x2;
-          contentSvg += `
-            <line x1="${mx1.toFixed(2)}" y1="${line.y1.toFixed(2)}" x2="${mx2.toFixed(2)}" y2="${line.y2.toFixed(2)}"
-                  stroke="#5a4635" stroke-width="0.32" stroke-dasharray="3 2" />
-          `;
-        });
-
-        // Inside center pocket prompt
-        contentSvg += `
-          <text x="${(paper.width / 2).toFixed(2)}" y="${(metrics.frontY + metrics.geom.H / 2).toFixed(2)}"
-                text-anchor="middle" font-family="'IM Fell English', serif" font-size="3.4" fill="#a6998d">
-            PLACE SEEDS HERE AFTER FOLDING SIDES &amp; BOTTOM
-          </text>
-          <text x="${(paper.width / 2).toFixed(2)}" y="${(paper.height - 4).toFixed(2)}"
-                text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.6" fill="#8c7866">
-            PAGE 2 OF 2 (INSIDE OF SHEET) • Mirrored for long-edge duplex printing
-          </text>
-          </g>
-        `;
-      }
-
+    } else if (state.foldingStyle === 'tuckslot') {
+      elements.guideModalContent.innerHTML = `
+        <div class="guide-step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <h4>Cut Perimeter &amp; Slit</h4>
+            <p>Cut along the solid outer outline. Using scissors or a craft blade, make a small clean slice along the red dashed slit line on the bottom flap.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <h4>Fold Side Flaps Inward</h4>
+            <p>Crease both side flaps inward along the dashed vertical lines toward the back of the packet.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <h4>Fold Bottom Up</h4>
+            <p>Fold the bottom flap up over the side flaps along the bottom dashed crease.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">4</div>
+          <div class="step-text">
+            <h4>Insert Seeds &amp; Tuck Tongue</h4>
+            <p>Place seeds inside the pouch. Fold the top flap down and slide the closure tongue firmly into the pre-cut slit.</p>
+          </div>
+        </div>
+      `;
     } else {
-      // =========================================================================
-      // TRADITIONAL CUTOUT NET MODE
-      // =========================================================================
-      const cutPath = generateCutOutlinePath(metrics);
-
-      if (pageType === 'onesided') {
-        contentSvg += renderFrontPanelArtwork(state, metrics);
-        contentSvg += `<path d="${cutPath}" fill="none" stroke="#222222" stroke-width="0.32" stroke-linejoin="round" stroke-linecap="round" />`;
-
-        if (state.showFoldLines) {
-          foldLines.forEach(line => {
-            contentSvg += `
-              <line x1="${line.x1.toFixed(2)}" y1="${line.y1.toFixed(2)}" x2="${line.x2.toFixed(2)}" y2="${line.y2.toFixed(2)}"
-                    stroke="#a6998d" stroke-width="0.28" stroke-dasharray="3 2" />
-            `;
-          });
-        }
-
-        contentSvg += `
-          <text x="${(paper.width / 2).toFixed(2)}" y="${(paper.height - 8).toFixed(2)}"
-                text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.6" fill="#756254">
-            ✂ Cut along solid outline • - - - Fold along dashed lines
-          </text>
-        `;
-      } else if (pageType === 'duplex-1') {
-        contentSvg += renderFrontPanelArtwork(state, metrics);
-        contentSvg += `
-          <text x="${(paper.width / 2).toFixed(2)}" y="${(paper.height - 8).toFixed(2)}"
-                text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.6" fill="#756254">
-            PAGE 1 OF 2 (OUTSIDE ARTWORK) • Flip paper on LONG EDGE
-          </text>
-        `;
-      } else if (pageType === 'duplex-2') {
-        const mirroredCutPath = mirrorPathHorizontally(cutPath, paper.width);
-        contentSvg += `<path d="${mirroredCutPath}" fill="none" stroke="#222222" stroke-width="0.32" stroke-linejoin="round" stroke-linecap="round" />`;
-
-        if (state.showFoldLines) {
-          foldLines.forEach(line => {
-            const mx1 = paper.width - line.x1;
-            const mx2 = paper.width - line.x2;
-            contentSvg += `
-              <line x1="${mx1.toFixed(2)}" y1="${line.y1.toFixed(2)}" x2="${mx2.toFixed(2)}" y2="${line.y2.toFixed(2)}"
-                    stroke="#5a4635" stroke-width="0.32" stroke-dasharray="3 2" />
-            `;
-          });
-        }
-
-        contentSvg += `
-          <text x="${(paper.width / 2).toFixed(2)}" y="${(paper.height - 8).toFixed(2)}"
-                text-anchor="middle" font-family="'IM Fell English', serif" font-size="2.6" fill="#756254">
-            PAGE 2 OF 2 (INSIDE NET &amp; CREASES) • Mirrored for duplex printing
-          </text>
-        `;
-      }
+      elements.guideModalContent.innerHTML = `
+        <div class="guide-step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <h4>Cut Along Solid Outline</h4>
+            <p>Cut out the envelope shape along the solid perimeter using scissors.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <h4>Fold Side Flaps Inward</h4>
+            <p>Fold the left and right flaps inward along the dashed vertical lines. The two flaps overlap down the center back.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <h4>Fold Bottom Up &amp; Secure Seam</h4>
+            <p>Fold the bottom flap up over the side flaps. Run a quick swipe of a glue stick or double-sided tape along the bottom and center overlap to seal the pouch.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">4</div>
+          <div class="step-text">
+            <h4>Fill &amp; Seal</h4>
+            <p>Place seeds inside. Fold down the top curved flap and secure with a sticker seal, dab of glue, or washi tape.</p>
+          </div>
+        </div>
+      `;
     }
-
-    return `
-      <svg xmlns="http://www.w3.org/2000/svg"
-           viewBox="0 0 ${paper.width} ${paper.height}"
-           width="100%" height="100%"
-           style="background-color: #ffffff; display: block;">
-        ${contentSvg}
-      </svg>
-    `;
   }
 
   /**
    * Renders the current sheet into the screen preview pane.
    */
   function renderPreview() {
-    let pageType = 'onesided';
-    if (state.printMode === 'duplex') {
-      pageType = state.activeDuplexPage === 1 ? 'duplex-1' : 'duplex-2';
-    }
-
-    elements.paperSheet.innerHTML = generateSheetSVG(pageType);
+    elements.paperSheet.innerHTML = generateSheetSVG(state);
     updatePaperSheetDimensions();
   }
 
@@ -543,24 +646,10 @@
    */
   function preparePrintDOM() {
     elements.printRoot.innerHTML = '';
-
-    if (state.printMode === 'onesided') {
-      const sheet = document.createElement('div');
-      sheet.className = 'print-sheet';
-      sheet.innerHTML = generateSheetSVG('onesided');
-      elements.printRoot.appendChild(sheet);
-    } else {
-      const sheet1 = document.createElement('div');
-      sheet1.className = 'print-sheet';
-      sheet1.innerHTML = generateSheetSVG('duplex-1');
-
-      const sheet2 = document.createElement('div');
-      sheet2.className = 'print-sheet';
-      sheet2.innerHTML = generateSheetSVG('duplex-2');
-
-      elements.printRoot.appendChild(sheet1);
-      elements.printRoot.appendChild(sheet2);
-    }
+    const sheet = document.createElement('div');
+    sheet.className = 'print-sheet';
+    sheet.innerHTML = generateSheetSVG(state);
+    elements.printRoot.appendChild(sheet);
   }
 
   /**
@@ -575,9 +664,10 @@
 
   function calculateFitScale() {
     const stage = elements.previewStage;
-    const stageWidth = stage.clientWidth - 60;
-    const stageHeight = stage.clientHeight - 60;
-    const paper = ENVELOPE_CONFIG.papers[state.paperSize];
+    if (!stage) return 1.0;
+    const stageWidth = stage.clientWidth - 50;
+    const stageHeight = stage.clientHeight - 50;
+    const paper = ENVELOPE_CONFIG.papers[state.paperSize] || ENVELOPE_CONFIG.papers.letter;
     const aspectRatio = paper.height / paper.width;
 
     const baseWidth = 520;

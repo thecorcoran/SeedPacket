@@ -6,8 +6,61 @@
 
 const CLIP_ART_MANIFEST = [
   {
+    id: "universal",
+    name: "Classic Heirloom Sprig (Universal)",
+    commonName: "",
+    latinName: "",
+    variety: "",
+    notes: "",
+    svg: `
+      <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Main graceful curved central stem -->
+        <path d="M50 88 C49 72 50 50 50 14" stroke-width="1.8" />
+        
+        <!-- Left lower leaf with veins and shading -->
+        <path d="M49 72 C35 70 24 60 21 48 C32 47 43 54 49 64" stroke-width="1.3" fill="currentColor" fill-opacity="0.08" />
+        <path d="M49 64 C38 58 29 52 21 48" stroke-width="0.8" />
+        <path d="M30 54 C33 58 38 61 44 63" stroke-width="0.6" />
+        <path d="M26 50 C29 53 34 56 40 58" stroke-width="0.6" />
+        <path d="M35 59 C39 62 44 64 48 65" stroke-width="0.6" />
+
+        <!-- Right lower leaf with veins and shading -->
+        <path d="M51 68 C64 65 74 56 77 44 C67 43 56 50 51 60" stroke-width="1.3" fill="currentColor" fill-opacity="0.08" />
+        <path d="M51 60 C61 54 70 48 77 44" stroke-width="0.8" />
+        <path d="M68 50 C65 54 60 57 55 59" stroke-width="0.6" />
+        <path d="M72 46 C69 49 64 52 58 55" stroke-width="0.6" />
+        <path d="M63 55 C59 58 54 60 51 61" stroke-width="0.6" />
+
+        <!-- Left mid leaf -->
+        <path d="M50 50 C38 47 28 38 27 28 C37 28 45 34 50 44" stroke-width="1.2" fill="currentColor" fill-opacity="0.08" />
+        <path d="M50 44 C41 38 33 33 27 28" stroke-width="0.7" />
+        <path d="M34 33 C37 37 42 40 47 42" stroke-width="0.5" />
+        <path d="M30 30 C33 33 37 36 43 38" stroke-width="0.5" />
+
+        <!-- Right mid leaf -->
+        <path d="M50 46 C61 43 71 35 72 25 C62 25 54 31 50 40" stroke-width="1.2" fill="currentColor" fill-opacity="0.08" />
+        <path d="M50 40 C58 35 66 30 72 25" stroke-width="0.7" />
+        <path d="M64 30 C61 34 57 37 52 39" stroke-width="0.5" />
+        <path d="M68 27 C65 30 61 33 55 35" stroke-width="0.5" />
+
+        <!-- Top flower buds & seed pod -->
+        <path d="M50 18 C45 14 44 8 50 4 C56 8 55 14 50 18 Z" stroke-width="1.3" fill="currentColor" fill-opacity="0.15" />
+        <path d="M50 18 L50 6" stroke-width="0.6" stroke-dasharray="1 1" />
+        
+        <!-- Left mini bud -->
+        <path d="M49 28 C43 25 41 20 44 17 C47 19 48 24 49 26" stroke-width="1.0" fill="currentColor" fill-opacity="0.1" />
+        <!-- Right mini bud -->
+        <path d="M51 25 C57 22 59 17 56 14 C53 16 52 21 51 23" stroke-width="1.0" fill="currentColor" fill-opacity="0.1" />
+
+        <!-- Base rootlet ornament / flourish -->
+        <path d="M50 88 C46 91 42 93 38 93 M50 88 C54 91 58 93 62 93" stroke-width="1.0" />
+        <circle cx="50" cy="94" r="1.2" fill="currentColor" />
+      </g>
+    `
+  },
+  {
     id: "none",
-    name: "None (Blank)",
+    name: "None (Minimalist Typographic)",
     commonName: "",
     latinName: "",
     variety: "",

@@ -568,6 +568,147 @@ input:checked + .toggle-slider:before {
   font-size: 0.88rem;
 }
 
+/* --- Botanical Lookup Pill --- */
+.lookup-badge {
+  margin-top: 6px;
+  background-color: #eaf1ec;
+  border: 1px solid #b8d4c1;
+  color: #23462f;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.btn-lookup-pill {
+  background-color: var(--green-accent);
+  color: #ffffff;
+  border: none;
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-lookup-pill:hover {
+  background-color: #213d29;
+}
+
+/* --- Packaged Date Controls Row --- */
+.date-controls-row {
+  display: flex;
+  gap: 8px;
+}
+
+.date-prefix-select {
+  flex: 0 0 110px;
+  font-weight: 600;
+}
+
+.date-month-select {
+  flex: 1;
+}
+
+.date-year-input {
+  flex: 0 0 70px;
+  text-align: center;
+}
+
+/* --- Badges & Trust Marks Grid --- */
+.badges-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-vintage);
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.badge-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem;
+  color: var(--text-dark);
+  cursor: pointer;
+  user-select: none;
+}
+
+.badge-checkbox-label input[type="checkbox"] {
+  accent-color: var(--text-accent);
+  cursor: pointer;
+}
+
+/* --- Custom Picture Upload Zone --- */
+.custom-upload-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  text-align: center;
+  width: 100%;
+}
+
+.uploaded-image-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background-color: #fcf9f2;
+  border: 1px dashed var(--border-vintage);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.82rem;
+}
+
+.uploaded-image-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 140px;
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+.image-filter-control {
+  flex: 1;
+}
+
+.select-small {
+  padding: 4px 6px;
+  font-size: 0.78rem;
+}
+
+.btn-remove-link {
+  background: none;
+  border: none;
+  color: #b83b26;
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-remove-link:hover {
+  text-decoration: underline;
+}
+
 /* ==========================================================================
    PRINT MEDIA STYLES
    ========================================================================== */
