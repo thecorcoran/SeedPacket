@@ -497,8 +497,9 @@ function formatPackagedDate(state) {
 
 /**
  * Generates the Vintage Front Artwork SVG group for a packet.
- * Strict collision-free dynamic vertical rhythm algorithm:
- * Computes top-down headers, bottom-up footers, and centers the artwork in the remaining space.
+ * Strict collision-free dynamic vertical rhythm algorithm with generous typography.
+ * Ensures notes have ample breathing room below the date banner, and all fonts
+ * are large, legible, and authentic to 19th-century seed catalog wood type.
  */
 function renderFrontPanelArtwork(state, x0, y0, W, H, maxClipSize, isSmall) {
   const fontHeader = state.fontFamily || "'Abril Fatface', serif";
@@ -525,79 +526,80 @@ function renderFrontPanelArtwork(state, x0, y0, W, H, maxClipSize, isSmall) {
   if (state.badgeOrganic) activeBadges.push("ORGANIC");
 
   // =========================================================================
-  // STRICT COLLISION-FREE VERTICAL STACKING CALCULATION
+  // AUDITED TYPOGRAPHY SIZES & VERTICAL RHYTHM BUDGET
   // =========================================================================
 
-  // --- TOP ELEMENTS (Stacking DOWNWARDS) ---
-  let topY = innerY + (isSmall ? 4.0 : 5.0);
+  // Top Section (Headers stacking DOWNWARDS)
+  let topY = innerY + (isSmall ? 4.5 : 6.0);
 
-  // 1. Catalog Header Banner
-  const bannerFontSize = isSmall ? 2.6 : 3.4;
+  // 1. Catalog Header Eyebrow
+  const bannerFontSize = isSmall ? 3.0 : 3.8;
   const bannerY = topY + bannerFontSize;
-  topY = bannerY + (isSmall ? 3.0 : 4.5);
+  topY = bannerY + (isSmall ? 4.0 : 5.5);
 
-  // 2. Main Title (Plant / Seed Display Name)
-  const maxTitleFont = isSmall ? 7.5 : 10.5;
-  const minTitleFont = isSmall ? 4.6 : 5.8;
+  // 2. Hero Plant Title (Bold, large, readable across a garden bench)
+  const maxTitleFont = isSmall ? 10.0 : 13.5;
+  const minTitleFont = isSmall ? 5.8 : 7.5;
   const titleFontSize = calculateAutoFitFontSize(seedName, innerW - 8, maxTitleFont, minTitleFont, fontHeader);
   const titleY = topY + titleFontSize;
-  topY = titleY + (isSmall ? 2.5 : 3.5);
+  topY = titleY + (isSmall ? 3.5 : 5.0);
 
-  // 3. Latin Binomial Name
+  // 3. Botanical Latin Name (Italic letterpress)
   let latinY = 0;
-  const latinFontSize = isSmall ? 3.0 : 4.0;
+  const latinFontSize = isSmall ? 3.8 : 4.8;
   if (hasLatinName) {
     latinY = topY + latinFontSize;
-    topY = latinY + (isSmall ? 2.2 : 3.0);
+    topY = latinY + (isSmall ? 3.2 : 4.5);
   }
 
   // 4. Cultivar / Variety
   let varietyY = 0;
-  const varietyFontSize = isSmall ? 2.8 : 3.6;
+  const varietyFontSize = isSmall ? 3.4 : 4.2;
   if (hasVariety) {
     varietyY = topY + varietyFontSize;
-    topY = varietyY + (isSmall ? 2.5 : 3.5);
+    topY = varietyY + (isSmall ? 3.5 : 5.0);
   }
 
-  // --- BOTTOM ELEMENTS (Stacking UPWARDS) ---
-  let botY = innerY + innerH - (isSmall ? 3.0 : 4.0);
+  // Bottom Section (Footers stacking UPWARDS from bottom border)
+  let botY = innerY + innerH - (isSmall ? 4.0 : 5.5);
 
   // 5. Trust Badges / Tailpiece
-  const footerFontSize = isSmall ? 2.4 : 3.0;
+  const footerFontSize = isSmall ? 3.0 : 3.8;
   const footerY = botY;
-  botY = footerY - footerFontSize - (isSmall ? 3.0 : 4.5);
+  botY = footerY - footerFontSize - (isSmall ? 4.0 : 6.0);
 
-  // 6. Notes (1 or 2 lines)
+  // 6. Garden & Sowing Notes (Generous font size and generous line height)
   const notesLines = [];
-  const notesFontSize = isSmall ? 2.6 : 3.2;
-  const notesLineSpacing = notesFontSize + 1.2;
+  const notesFontSize = isSmall ? 3.4 : 4.2;
+  const notesLineSpacing = notesFontSize + (isSmall ? 2.0 : 2.6);
   let notesLine1Y = 0, notesLine2Y = 0;
 
   if (hasNotes) {
-    const maxChars = innerW > 70 ? 46 : 32;
+    const maxChars = innerW > 70 ? 44 : 30;
     const lines = wrapTextIntoLines(state.notes.trim(), maxChars);
     if (lines.length > 1) {
       notesLines.push(lines[0], lines[1]);
       notesLine2Y = botY;
       notesLine1Y = notesLine2Y - notesLineSpacing;
-      botY = notesLine1Y - notesFontSize - (isSmall ? 3.0 : 4.5);
+      // Generous breathing room (8.0 mm) between the date line above and line 1 of notes
+      botY = notesLine1Y - notesFontSize - (isSmall ? 6.0 : 8.5);
     } else if (lines.length === 1) {
       notesLines.push(lines[0]);
       notesLine1Y = botY;
-      botY = notesLine1Y - notesFontSize - (isSmall ? 3.0 : 4.5);
+      botY = notesLine1Y - notesFontSize - (isSmall ? 6.0 : 8.5);
     }
   }
 
-  // 7. Packaged Date Banner
-  const dateFontSize = isSmall ? 2.8 : 3.4;
+  // 7. Packaged Date Ribbon
+  const dateFontSize = isSmall ? 3.4 : 4.2;
   const dateTextY = botY;
-  const dateBoxTopY = dateTextY - dateFontSize - 1.2;
-  const dateBoxBotY = dateTextY + 2.2;
-  botY = dateBoxTopY - (isSmall ? 3.0 : 4.5);
+  const dateLineY = dateTextY + (isSmall ? 2.2 : 2.8);
+  // Breathing space above date line before artwork
+  botY = dateTextY - dateFontSize - (isSmall ? 4.5 : 6.5);
 
-  // --- ARTWORK CENTERING (In remaining space between topY and botY) ---
+  // Central Artwork: Auto-fits in the open space between topY and botY
   const artAvailableH = Math.max(16, botY - topY);
-  const artSize = Math.min(maxClipSize || 36, artAvailableH, innerW * 0.58);
+  const artSize = Math.min(maxClipSize || 42, artAvailableH, innerW * 0.58);
   const clipBoxX = centerX - (artSize / 2);
   const clipBoxY = topY + (artAvailableH - artSize) / 2;
 
@@ -608,44 +610,44 @@ function renderFrontPanelArtwork(state, x0, y0, W, H, maxClipSize, isSmall) {
     <g class="vintage-front-panel" fill="#2b231d" stroke="none">
       <!-- Outer Double Border with Corner Florets -->
       <rect x="${innerX.toFixed(2)}" y="${innerY.toFixed(2)}" width="${innerW.toFixed(2)}" height="${innerH.toFixed(2)}"
-            fill="#fcfaf5" stroke="#2b231d" stroke-width="0.75" rx="0.5" />
-      <rect x="${(innerX + 1.2).toFixed(2)}" y="${(innerY + 1.2).toFixed(2)}" width="${(innerW - 2.4).toFixed(2)}" height="${(innerH - 2.4).toFixed(2)}"
-            fill="none" stroke="#2b231d" stroke-width="0.3" stroke-dasharray="2.5 1.2" />
+            fill="#fcfaf5" stroke="#2b231d" stroke-width="0.85" rx="0.5" />
+      <rect x="${(innerX + 1.4).toFixed(2)}" y="${(innerY + 1.4).toFixed(2)}" width="${(innerW - 2.8).toFixed(2)}" height="${(innerH - 2.8).toFixed(2)}"
+            fill="none" stroke="#2b231d" stroke-width="0.32" stroke-dasharray="2.8 1.4" />
 
       <!-- Corner Rosettes -->
-      <g stroke="#2b231d" stroke-width="0.35" fill="none">
-        <circle cx="${(innerX + 3.0).toFixed(2)}" cy="${(innerY + 3.0).toFixed(2)}" r="1.3" />
-        <circle cx="${(innerX + innerW - 3.0).toFixed(2)}" cy="${(innerY + 3.0).toFixed(2)}" r="1.3" />
-        <circle cx="${(innerX + 3.0).toFixed(2)}" cy="${(innerY + innerH - 3.0).toFixed(2)}" r="1.3" />
-        <circle cx="${(innerX + innerW - 3.0).toFixed(2)}" cy="${(innerY + innerH - 3.0).toFixed(2)}" r="1.3" />
+      <g stroke="#2b231d" stroke-width="0.38" fill="none">
+        <circle cx="${(innerX + 3.2).toFixed(2)}" cy="${(innerY + 3.2).toFixed(2)}" r="1.4" />
+        <circle cx="${(innerX + innerW - 3.2).toFixed(2)}" cy="${(innerY + 3.2).toFixed(2)}" r="1.4" />
+        <circle cx="${(innerX + 3.2).toFixed(2)}" cy="${(innerY + innerH - 3.2).toFixed(2)}" r="1.4" />
+        <circle cx="${(innerX + innerW - 3.2).toFixed(2)}" cy="${(innerY + innerH - 3.2).toFixed(2)}" r="1.4" />
       </g>
 
       <!-- Vintage Catalog Banner Header -->
       <text x="${centerX.toFixed(2)}" y="${bannerY.toFixed(2)}"
-            text-anchor="middle" font-family="${fontBody}" font-size="${bannerFontSize.toFixed(2)}" font-weight="bold" letter-spacing="1.4" fill="#52443a">
+            text-anchor="middle" font-family="${fontBody}" font-size="${bannerFontSize.toFixed(2)}" font-weight="bold" letter-spacing="1.6" fill="#52443a">
         ✦ HEIRLOOM SEED COLLECTION ✦
       </text>
 
       <!-- Plant / Seed Display Name -->
       <text x="${centerX.toFixed(2)}" y="${titleY.toFixed(2)}"
             text-anchor="middle" font-family="${fontHeader}" font-size="${titleFontSize.toFixed(2)}" font-weight="bold"
-            letter-spacing="0.5" fill="#1e1814">
+            letter-spacing="0.6" fill="#140f0c">
         ${escapeXml(seedName.toUpperCase())}
       </text>
   `;
 
   // Latin Name
   if (hasLatinName) {
-    const halfSpan = Math.min(innerW * 0.40, 24);
+    const halfSpan = Math.min(innerW * 0.42, 26);
     svg += `
       <g class="latin-name-block">
-        <line x1="${(centerX - halfSpan).toFixed(2)}" y1="${(latinY - 0.9).toFixed(2)}" x2="${(centerX - halfSpan + 5).toFixed(2)}" y2="${(latinY - 0.9).toFixed(2)}" stroke="#8c7866" stroke-width="0.3" />
+        <line x1="${(centerX - halfSpan).toFixed(2)}" y1="${(latinY - 1.1).toFixed(2)}" x2="${(centerX - halfSpan + 6).toFixed(2)}" y2="${(latinY - 1.1).toFixed(2)}" stroke="#8c7866" stroke-width="0.35" />
         <text x="${centerX.toFixed(2)}" y="${latinY.toFixed(2)}"
               text-anchor="middle" font-family="${fontBody}" font-size="${latinFontSize.toFixed(2)}" font-style="italic"
-              letter-spacing="0.4" fill="#52443a">
+              letter-spacing="0.4" fill="#3a2e25">
           ❦ ${escapeXml(state.latinName)} ❦
         </text>
-        <line x1="${(centerX + halfSpan - 5).toFixed(2)}" y1="${(latinY - 0.9).toFixed(2)}" x2="${(centerX + halfSpan).toFixed(2)}" y2="${(latinY - 0.9).toFixed(2)}" stroke="#8c7866" stroke-width="0.3" />
+        <line x1="${(centerX + halfSpan - 6).toFixed(2)}" y1="${(latinY - 1.1).toFixed(2)}" x2="${(centerX + halfSpan).toFixed(2)}" y2="${(latinY - 1.1).toFixed(2)}" stroke="#8c7866" stroke-width="0.35" />
       </g>
     `;
   }
@@ -654,13 +656,13 @@ function renderFrontPanelArtwork(state, x0, y0, W, H, maxClipSize, isSmall) {
   if (hasVariety) {
     svg += `
       <text x="${centerX.toFixed(2)}" y="${varietyY.toFixed(2)}"
-            text-anchor="middle" font-family="${fontBody}" font-size="${varietyFontSize.toFixed(2)}" font-style="italic" fill="#3a3028">
+            text-anchor="middle" font-family="${fontBody}" font-size="${varietyFontSize.toFixed(2)}" font-style="italic" fill="#30261e">
         var. &#8220;${escapeXml(state.variety.trim())}&#8221;
       </text>
     `;
   }
 
-  // Illustration / Artwork: Custom Uploaded Picture OR Vector Clip Art
+  // Central Artwork: Custom Uploaded Picture OR Vector Engraving
   if (state.customImage) {
     const filterAttr = state.imageFilter === 'monochrome' ? 'filter="url(#vintage-monochrome)"' : '';
     svg += `
@@ -673,7 +675,6 @@ function renderFrontPanelArtwork(state, x0, y0, W, H, maxClipSize, isSmall) {
       </g>
     `;
   } else {
-    // Vector Clip Art
     const clipArt = CLIP_ART_MANIFEST.find(c => c.id === state.clipArtId) || CLIP_ART_MANIFEST[0];
     if (clipArt && clipArt.svg) {
       svg += `
@@ -685,49 +686,53 @@ function renderFrontPanelArtwork(state, x0, y0, W, H, maxClipSize, isSmall) {
         </g>
       `;
     } else {
-      // Minimalist Ornamental Flourish
       svg += `
-        <g transform="translate(${centerX.toFixed(2)}, ${(clipBoxY + artSize / 2).toFixed(2)})" stroke="#8c7866" stroke-width="0.4" fill="none">
-          <path d="M -18 0 C -10 -4 -4 4 0 0 C 4 -4 10 4 18 0" />
-          <circle cx="0" cy="0" r="1.5" fill="#8c7866" />
+        <!-- Minimalist Flourish -->
+        <g transform="translate(${centerX.toFixed(2)}, ${(clipBoxY + artSize / 2).toFixed(2)})" stroke="#8c7866" stroke-width="0.45" fill="none">
+          <path d="M -20 0 C -12 -5 -5 5 0 0 C 5 -5 12 5 20 0" />
+          <circle cx="0" cy="0" r="1.8" fill="#8c7866" />
         </g>
       `;
     }
   }
 
-  // Packaged Date Banner
+  // Packaged Date Ribbon (Clean, dignified vintage rule with ample space)
   const dateStr = formatPackagedDate(state);
+  const ruleSpan = Math.min(innerW * 0.44, 28);
   svg += `
+    <!-- Packaged Date Ribbon -->
     <g class="harvest-meta">
-      <line x1="${(innerX + 4).toFixed(2)}" y1="${dateBoxTopY.toFixed(2)}" x2="${(innerX + innerW - 4).toFixed(2)}" y2="${dateBoxTopY.toFixed(2)}" stroke="#2b231d" stroke-width="0.4" />
-      <line x1="${(innerX + 4).toFixed(2)}" y1="${(dateBoxTopY + 0.7).toFixed(2)}" x2="${(innerX + innerW - 4).toFixed(2)}" y2="${(dateBoxTopY + 0.7).toFixed(2)}" stroke="#2b231d" stroke-width="0.2" />
+      <line x1="${(centerX - ruleSpan).toFixed(2)}" y1="${(dateTextY - dateFontSize * 0.4).toFixed(2)}"
+            x2="${(innerX + 5).toFixed(2)}" y2="${(dateTextY - dateFontSize * 0.4).toFixed(2)}"
+            stroke="#2b231d" stroke-width="0.35" />
       <text x="${centerX.toFixed(2)}" y="${dateTextY.toFixed(2)}"
-            text-anchor="middle" font-family="${fontBody}" font-size="${dateFontSize.toFixed(2)}" font-weight="600" letter-spacing="0.6" fill="#2b231d">
-        ${escapeXml(dateStr)}
+            text-anchor="middle" font-family="${fontBody}" font-size="${dateFontSize.toFixed(2)}" font-weight="600" letter-spacing="0.8" fill="#1e1814">
+        ✦ ${escapeXml(dateStr)} ✦
       </text>
-      <line x1="${(innerX + 4).toFixed(2)}" y1="${(dateBoxBotY - 0.7).toFixed(2)}" x2="${(innerX + innerW - 4).toFixed(2)}" y2="${(dateBoxBotY - 0.7).toFixed(2)}" stroke="#2b231d" stroke-width="0.2" />
-      <line x1="${(innerX + 4).toFixed(2)}" y1="${dateBoxBotY.toFixed(2)}" x2="${(innerX + innerW - 4).toFixed(2)}" y2="${dateBoxBotY.toFixed(2)}" stroke="#2b231d" stroke-width="0.4" />
+      <line x1="${(centerX + ruleSpan).toFixed(2)}" y1="${(dateTextY - dateFontSize * 0.4).toFixed(2)}"
+            x2="${(innerX + innerW - 5).toFixed(2)}" y2="${(dateTextY - dateFontSize * 0.4).toFixed(2)}"
+            stroke="#2b231d" stroke-width="0.35" />
     </g>
   `;
 
-  // Notes
+  // Garden & Sowing Notes (Generously spaced and fully readable)
   if (notesLines.length > 0) {
     svg += `<g class="packet-notes">`;
     if (notesLines.length === 1) {
       svg += `
         <text x="${centerX.toFixed(2)}" y="${notesLine1Y.toFixed(2)}"
-              text-anchor="middle" font-family="${fontBody}" font-size="${notesFontSize.toFixed(2)}" font-style="italic" fill="#5c4d41">
+              text-anchor="middle" font-family="${fontBody}" font-size="${notesFontSize.toFixed(2)}" font-style="italic" fill="#3a2e24">
           ${escapeXml(notesLines[0])}
         </text>
       `;
     } else {
       svg += `
         <text x="${centerX.toFixed(2)}" y="${notesLine1Y.toFixed(2)}"
-              text-anchor="middle" font-family="${fontBody}" font-size="${notesFontSize.toFixed(2)}" font-style="italic" fill="#5c4d41">
+              text-anchor="middle" font-family="${fontBody}" font-size="${notesFontSize.toFixed(2)}" font-style="italic" fill="#3a2e24">
           ${escapeXml(notesLines[0])}
         </text>
         <text x="${centerX.toFixed(2)}" y="${notesLine2Y.toFixed(2)}"
-              text-anchor="middle" font-family="${fontBody}" font-size="${notesFontSize.toFixed(2)}" font-style="italic" fill="#5c4d41">
+              text-anchor="middle" font-family="${fontBody}" font-size="${notesFontSize.toFixed(2)}" font-style="italic" fill="#3a2e24">
           ${escapeXml(notesLines[1])}
         </text>
       `;
@@ -740,13 +745,13 @@ function renderFrontPanelArtwork(state, x0, y0, W, H, maxClipSize, isSmall) {
     const badgeText = `★ ${activeBadges.join(" • ")} ★`;
     svg += `
       <text x="${centerX.toFixed(2)}" y="${footerY.toFixed(2)}"
-            text-anchor="middle" font-family="${fontBody}" font-size="${footerFontSize.toFixed(2)}" letter-spacing="0.9" fill="#756254">
+            text-anchor="middle" font-family="${fontBody}" font-size="${footerFontSize.toFixed(2)}" letter-spacing="1.0" fill="#52443a">
         ${escapeXml(badgeText)}
       </text>
     `;
   } else {
     svg += `
-      <g transform="translate(${centerX.toFixed(2)}, ${(footerY - 0.8).toFixed(2)})" fill="#8c7866" font-family="${fontBody}" font-size="${(footerFontSize + 0.4).toFixed(2)}" text-anchor="middle">
+      <g transform="translate(${centerX.toFixed(2)}, ${(footerY - 0.8).toFixed(2)})" fill="#8c7866" font-family="${fontBody}" font-size="${(footerFontSize + 0.6).toFixed(2)}" text-anchor="middle">
         <text y="0">❦ ─── ✤ ─── ❦</text>
       </g>
     `;

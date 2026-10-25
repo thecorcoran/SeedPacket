@@ -671,7 +671,7 @@
     const paper = ENVELOPE_CONFIG.papers[state.paperSize] || ENVELOPE_CONFIG.papers.letter;
     const aspectRatio = paper.height / paper.width;
 
-    const baseWidthPx = 620;
+    const baseWidthPx = 680;
     const baseHeightPx = baseWidthPx * aspectRatio;
 
     elements.paperSheet.style.width = `${baseWidthPx}px`;
@@ -704,17 +704,17 @@
   function calculateFitScale() {
     const stage = elements.previewStage;
     if (!stage) return 1.0;
-    const stageWidth = stage.clientWidth - 50;
-    const stageHeight = stage.clientHeight - 50;
+    const stageWidth = stage.clientWidth - 40;
+    const stageHeight = stage.clientHeight - 40;
     const paper = ENVELOPE_CONFIG.papers[state.paperSize] || ENVELOPE_CONFIG.papers.letter;
     const aspectRatio = paper.height / paper.width;
 
-    const baseWidth = 520;
+    const baseWidth = 680;
     const baseHeight = baseWidth * aspectRatio;
 
     const scaleX = stageWidth / baseWidth;
     const scaleY = stageHeight / baseHeight;
-    return Math.min(scaleX, scaleY, 1.25);
+    return Math.min(scaleX, scaleY, 1.4);
   }
 
   function setZoom(scale) {
