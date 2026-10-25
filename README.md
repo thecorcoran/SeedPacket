@@ -9,8 +9,8 @@ A lightweight, dependency-free web application (plain HTML, CSS, and vanilla JS 
   - **Gardener's Diamond Pouch (100% Glue-Free & Tapeless)**: The traditional gardener's cup pouch fold from a cut square sheet. Impossible for fine seeds to leak; unfolds completely flat in the garden.
   - **Interlocking Tuck-Slot**: Straight perimeter cut with a simple slit on the back pocket so the closure tongue tucks in cleanly without adhesives.
 - **Sheet Layouts**:
-  - **1 Packet per Sheet**: Large generous packet (3.3 × 4.8 in) plus a bonus cut-out **Garden Stake Plant Marker** to tape to wooden plant stakes.
-  - **2 Packets per Sheet**: Standard catalog seed envelopes (2.7 × 3.85 in each) printed side-by-side on a single sheet of paper to save paper.
+  - **1 Packet per Sheet**: Maximized page-fill seed packet (3.7 × 5.6 in finished front) that utilizes the full sheet of paper with zero waste.
+  - **2 Packets per Sheet**: Two standard catalog seed envelopes (3.0 × 3.9 in each) printed side-by-side on a single sheet of paper.
 - **Built-in Botanical Taxonomic Database & Lookup**:
   - Offline lookup covering 80+ popular garden vegetables, herbs, and flowers.
   - Type a common name or partial typo (e.g. `Zinna` or `Zinnia`) to auto-populate the botanical Latin binomial (*Zinnia elegans*), plant family, and suggested varieties.
